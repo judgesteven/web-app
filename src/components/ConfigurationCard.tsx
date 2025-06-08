@@ -59,6 +59,12 @@ const ConfigurationCard = () => {
     toast.success('Credentials stored successfully!')
   }
 
+  const handleSelectPlayer = (playerId: string | undefined) => {
+    if (!playerId) return
+    setSelectedPlayerId(playerId)
+    fetchPlayerDetails()
+  }
+
   // Generate 30 avatar options (using numbers 1-30 as placeholders)
   const avatars = Array.from({ length: 30 }, (_, i) => ({
     id: i + 1,
@@ -323,42 +329,44 @@ const ConfigurationCard = () => {
 
   return (
     <div className="space-y-8">
-      <div className="w-full max-w-md mx-auto p-4 sm:p-6 bg-white rounded-xl shadow-lg backdrop-blur-sm bg-opacity-90 border border-gray-100 relative">
+      <div className="w-full max-w-md mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 relative">
         <div className="space-y-4">
           {/* Account Name */}
-          <input
-            type="text"
-            id="accountName"
-            placeholder="Account Name"
-            value={accountName}
-            onChange={handleAccountNameChange}
-            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              id="accountName"
+              placeholder="Account Name"
+              value={accountName}
+              onChange={handleAccountNameChange}
+              className="flex-1 px-4 py-2 bg-white/50 border border-gray-200/50 rounded-3xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-transparent transition-all duration-200 text-sm text-gray-800 placeholder-gray-400"
+            />
+          </div>
 
-          {/* API Key */}
-          <input
-            type="password"
-            id="apiKey"
-            placeholder="API Key"
-            value={apiKey}
-            onChange={handleApiKeyChange}
-            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-          />
+          {/* API Key and Fetch Button */}
+          <div className="flex gap-2">
+            <input
+              type="password"
+              id="apiKey"
+              placeholder="API Key"
+              value={apiKey}
+              onChange={handleApiKeyChange}
+              className="flex-1 px-4 py-2 bg-white/50 border border-gray-200/50 rounded-3xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-transparent transition-all duration-200 text-sm text-gray-800 placeholder-gray-400"
+            />
+            <button
+              className="w-20 px-4 py-2 bg-blue-500 text-white rounded-3xl hover:bg-blue-600 transition-all duration-200 disabled:opacity-60 whitespace-nowrap shadow-sm hover:shadow-md active:scale-[0.98] text-sm"
+              onClick={fetchPlayers}
+              disabled={isLoading || !accountName || !apiKey}
+            >
+              {isLoading ? 'Fetching...' : 'Fetch'}
+            </button>
+          </div>
 
-          {/* Fetch Button */}
-          <button
-            className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 disabled:opacity-60"
-            onClick={fetchPlayers}
-            disabled={isLoading || !accountName || !apiKey}
-          >
-            {isLoading ? 'Fetching...' : 'Fetch'}
-          </button>
-
-          {/* Select Existing Player */}
-          <div className="space-y-1">
+          {/* Select Existing Player and Go Button */}
+          <div className="flex gap-2">
             <select
               id="existingPlayer"
-              className="block w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="flex-1 px-4 py-2 bg-white/50 border border-gray-200/50 rounded-3xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-transparent transition-all duration-200 text-sm text-gray-800 appearance-none"
               value={selectedPlayerId}
               onChange={e => setSelectedPlayerId(e.target.value)}
             >
@@ -369,20 +377,18 @@ const ConfigurationCard = () => {
                 </option>
               ))}
             </select>
+            <button
+              className="w-20 px-4 py-2 bg-blue-500 text-white rounded-3xl hover:bg-blue-600 transition-all duration-200 disabled:opacity-60 whitespace-nowrap shadow-sm hover:shadow-md active:scale-[0.98] text-sm"
+              onClick={fetchPlayerDetails}
+              disabled={!selectedPlayerId}
+            >
+              Go
+            </button>
           </div>
 
-          {/* Go Button */}
-          <button
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
-            onClick={fetchPlayerDetails}
-            disabled={!selectedPlayerId}
-          >
-            Go
-          </button>
-
           {/* Add New Player Section */}
-          <div className="border-t border-gray-100 pt-4">
-            <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-900">Add New Player</h3>
+          <div className="border-t border-gray-100/50 pt-4">
+            <h3 className="text-sm font-semibold mb-3 text-gray-800">Add New Player</h3>
             
             {/* Player ID */}
             <input
@@ -391,7 +397,7 @@ const ConfigurationCard = () => {
               placeholder="Player ID"
               value={newPlayerId}
               onChange={e => setNewPlayerId(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 mb-4"
+              className="w-full px-4 py-2 bg-white/50 border border-gray-200/50 rounded-3xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-transparent transition-all duration-200 text-sm text-gray-800 placeholder-gray-400 mb-3"
             />
 
             {/* Player Name */}
@@ -401,13 +407,13 @@ const ConfigurationCard = () => {
               placeholder="Player Name"
               value={newPlayerName}
               onChange={e => setNewPlayerName(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 mb-4"
+              className="w-full px-4 py-2 bg-white/50 border border-gray-200/50 rounded-3xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-transparent transition-all duration-200 text-sm text-gray-800 placeholder-gray-400 mb-3"
             />
 
             {/* Avatar Selection */}
             <button
               onClick={() => setShowAvatarModal(true)}
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm hover:border-blue-500 transition-colors duration-200 text-gray-600 mb-4"
+              className="w-full px-4 py-2 bg-white/50 border border-gray-200/50 rounded-3xl shadow-sm hover:border-blue-500/50 transition-all duration-200 text-sm text-gray-600 mb-3 hover:bg-white/70 active:scale-[0.98]"
             >
               {selectedAvatar ? 'Change Avatar' : 'Select Player Avatar'}
             </button>
@@ -416,9 +422,9 @@ const ConfigurationCard = () => {
             <button
               onClick={createNewPlayer}
               disabled={true}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-3xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-200 text-sm"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Add New Player
@@ -428,18 +434,18 @@ const ConfigurationCard = () => {
 
         {/* Avatar Selection Modal */}
         {showAvatarModal && (
-          <div className="absolute inset-0 bg-white rounded-xl shadow-xl z-10">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base sm:text-lg font-semibold">Select Avatar</h3>
+          <div className="absolute inset-0 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl z-10">
+            <div className="p-4">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-sm font-semibold text-gray-800">Select Avatar</h3>
                 <button
                   onClick={() => setShowAvatarModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
                 >
                   ✕
                 </button>
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                 {avatars.map((avatar) => (
                   <button
                     key={avatar.id}
@@ -447,12 +453,12 @@ const ConfigurationCard = () => {
                       setSelectedAvatar(avatar.url)
                       setShowAvatarModal(false)
                     }}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                    className="p-2 hover:bg-gray-100/50 rounded-2xl transition-all duration-200 active:scale-[0.98]"
                   >
                     <img
                       src={avatar.url}
                       alt={`Avatar ${avatar.id}`}
-                      className="w-full h-auto rounded-lg"
+                      className="w-full h-auto rounded-xl"
                     />
                   </button>
                 ))}
