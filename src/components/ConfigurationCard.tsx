@@ -13,7 +13,7 @@ const ConfigurationCard = () => {
   }))
 
   return (
-    <div className="w-full max-w-md mx-auto p-6 bg-white rounded-xl shadow-lg backdrop-blur-sm bg-opacity-90 border border-gray-100 relative">
+    <div className="w-full max-w-md mx-auto p-4 sm:p-6 bg-white rounded-xl shadow-lg backdrop-blur-sm bg-opacity-90 border border-gray-100 relative">
       <div className="space-y-4">
         {/* Account Name */}
         <input
@@ -57,7 +57,7 @@ const ConfigurationCard = () => {
 
         {/* Add New Player Section */}
         <div className="border-t border-gray-100 pt-4">
-          <h3 className="text-lg font-semibold mb-4 text-gray-900">Add New Player</h3>
+          <h3 className="text-base sm:text-lg font-semibold mb-4 text-gray-900">Add New Player</h3>
           
           {/* Player ID */}
           <input
@@ -96,7 +96,7 @@ const ConfigurationCard = () => {
           <div className="absolute inset-0 bg-white rounded-xl shadow-xl z-10">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Select Avatar</h3>
+                <h3 className="text-base sm:text-lg font-semibold">Select Avatar</h3>
                 <button
                   onClick={() => setShowAvatarModal(false)}
                   className="text-gray-500 hover:text-gray-700"
@@ -104,7 +104,7 @@ const ConfigurationCard = () => {
                   ✕
                 </button>
               </div>
-              <div className="grid grid-cols-5 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
                 {avatars.map((avatar) => (
                   <button
                     key={avatar.id}
