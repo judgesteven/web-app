@@ -1,11 +1,15 @@
 import React from 'react'
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import './globals.css'
 import Header from '../components/Header'
+import { Toaster } from 'react-hot-toast'
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'GameLayer Web App',
-  description: 'GameLayer Web Application',
+  description: 'A web application for GameLayer',
   icons: {
     icon: '/favicon.ico',
   },
@@ -18,9 +22,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className={inter.className}>
         <Header />
         {children}
+        <Toaster position="top-center" />
       </body>
     </html>
   )
