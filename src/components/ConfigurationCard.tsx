@@ -7,10 +7,13 @@ import { toast } from 'react-hot-toast'
 const ConfigurationCard = () => {
   const [showAvatarModal, setShowAvatarModal] = useState(false)
   const [selectedAvatar, setSelectedAvatar] = useState('')
+  const [newPlayerId, setNewPlayerId] = useState('')
+  const [newPlayerName, setNewPlayerName] = useState('')
+  const [isAddingPlayer, setIsAddingPlayer] = useState(false)
+  const [players, setPlayers] = useState<{id?: string; name?: string; player?: string}[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [accountName, setAccountName] = useState('')
   const [apiKey, setApiKey] = useState('')
-  const [players, setPlayers] = useState<{id?: string; name?: string; player?: string}[]>([])
-  const [loading, setLoading] = useState(false)
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('')
   const [playerData, setPlayerData] = useState<{
     name?: string;
@@ -21,15 +24,40 @@ const ConfigurationCard = () => {
     team?: string;
     teamId?: string;
   }>({})
-  const [newPlayerId, setNewPlayerId] = useState('')
-  const [newPlayerName, setNewPlayerName] = useState('')
-  const [isAddingPlayer, setIsAddingPlayer] = useState(false)
 
-  // On mount, load apiKey from localStorage if present
+  // Load stored credentials on component mount
   useEffect(() => {
-    const storedKey = localStorage.getItem('apiKey')
-    if (storedKey) setApiKey(storedKey)
+    const storedAccountName = localStorage.getItem('accountName')
+    const storedApiKey = localStorage.getItem('apiKey')
+    
+    if (storedAccountName) setAccountName(storedAccountName)
+    if (storedApiKey) setApiKey(storedApiKey)
   }, [])
+
+  // Store credentials when they change
+  useEffect(() => {
+    if (accountName) localStorage.setItem('accountName', accountName)
+    if (apiKey) localStorage.setItem('apiKey', apiKey)
+  }, [accountName, apiKey])
+
+  const handleAccountNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAccountName(e.target.value)
+  }
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setApiKey(e.target.value)
+  }
+
+  const handleStoreCredentials = () => {
+    if (!accountName || !apiKey) {
+      toast.error('Please enter both Account Name and API Key')
+      return
+    }
+
+    localStorage.setItem('accountName', accountName)
+    localStorage.setItem('apiKey', apiKey)
+    toast.success('Credentials stored successfully!')
+  }
 
   // Generate 30 avatar options (using numbers 1-30 as placeholders)
   const avatars = Array.from({ length: 30 }, (_, i) => ({
@@ -179,7 +207,7 @@ const ConfigurationCard = () => {
       return
     }
 
-    setLoading(true)
+    setIsLoading(true)
     try {
       const url = `https://api.gamelayer.co/api/v0/players?account=${encodeURIComponent(accountName.trim())}`
       const headers = {
@@ -232,7 +260,7 @@ const ConfigurationCard = () => {
       console.error('API Error:', error)
       toast.error('Failed to fetch players')
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -303,7 +331,7 @@ const ConfigurationCard = () => {
             id="accountName"
             placeholder="Account Name"
             value={accountName}
-            onChange={e => setAccountName(e.target.value)}
+            onChange={handleAccountNameChange}
             className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           />
 
@@ -313,7 +341,7 @@ const ConfigurationCard = () => {
             id="apiKey"
             placeholder="API Key"
             value={apiKey}
-            onChange={e => setApiKey(e.target.value)}
+            onChange={handleApiKeyChange}
             className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           />
 
@@ -321,9 +349,9 @@ const ConfigurationCard = () => {
           <button
             className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 disabled:opacity-60"
             onClick={fetchPlayers}
-            disabled={loading || !accountName || !apiKey}
+            disabled={isLoading || !accountName || !apiKey}
           >
-            {loading ? 'Fetching...' : 'Fetch'}
+            {isLoading ? 'Fetching...' : 'Fetch'}
           </button>
 
           {/* Select Existing Player */}
