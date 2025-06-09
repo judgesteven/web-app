@@ -594,7 +594,7 @@ const ConfigurationCard = () => {
   const handleFetchAchievements = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`https://api.stevenjudge.com/achievements?accountName=${encodeURIComponent(accountName)}&apiKey=${encodeURIComponent(apiKey)}`)
+      const response = await fetch(`https://api.gamelayer.co/api/v0/achievements?accountName=${encodeURIComponent(accountName)}&apiKey=${encodeURIComponent(apiKey)}`)
       if (!response.ok) {
         throw new Error('Failed to fetch achievements')
       }
