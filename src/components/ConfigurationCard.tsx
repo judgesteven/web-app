@@ -603,15 +603,17 @@ const ConfigurationCard = () => {
       const achievementsRecord = (Array.isArray(data) ? data : []).reduce((acc, achievement) => ({
         ...acc,
         [achievement.id]: {
-          status: achievement.status || null,
+          // Keep existing status if it exists, otherwise use new status
+          status: playerAchievements[achievement.id]?.status || achievement.status || null,
+          // Update steps completed
           stepsCompleted: achievement.stepsCompleted || 0
         }
-      }), {})
+      }), { ...playerAchievements }) // Start with existing achievements
       setPlayerAchievements(achievementsRecord)
     } catch (error) {
       console.error('Error fetching achievements:', error)
       toast.error('Failed to fetch achievements')
-      setPlayerAchievements({})
+      // Don't clear achievements on error, just keep existing ones
     } finally {
       setIsLoading(false)
     }
