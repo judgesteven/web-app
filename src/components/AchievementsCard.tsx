@@ -11,7 +11,7 @@ interface Achievement {
   description: string
   steps: number
   stepsCompleted: number
-  status: AchievementStatus  // No longer allowing undefined
+  status: AchievementStatus  // Explicitly type as AchievementStatus
   imgUrl?: string
 }
 
@@ -84,8 +84,9 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
       <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
         {achievements.map((achievement) => {
-          // Always show as inactive before GO button is pressed
-          const isActive = achievement.status !== null
+          // Ensure status is always AchievementStatus type
+          const status: AchievementStatus = achievement.status ?? null
+          const isActive = status !== null
           const progress = achievement.stepsCompleted || 0
           const progressPercent = Math.min(100, (progress / achievement.steps) * 100)
 
@@ -123,7 +124,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
                   <div className="mt-1 space-y-1">
                     <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
                       <div 
-                        className={`h-full ${getProgressColor(achievement.status)} transition-all duration-300`}
+                        className={`h-full ${getProgressColor(status)} transition-all duration-300`}
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
@@ -136,10 +137,10 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
                         </svg>
                         {progress}/{achievement.steps}
                       </span>
-                      {isActive && achievement.status && (
-                        <span className={`flex items-center gap-0.5 ${getStatusColor(achievement.status)}`}>
-                          {getStatusIcon(achievement.status)}
-                          {achievement.status}
+                      {isActive && status && (
+                        <span className={`flex items-center gap-0.5 ${getStatusColor(status)}`}>
+                          {getStatusIcon(status)}
+                          {status}
                         </span>
                       )}
                     </div>
