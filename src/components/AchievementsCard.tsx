@@ -20,16 +20,14 @@ interface AchievementsCardProps {
   isLoading?: boolean
 }
 
-// Helper function to get color based on status
-const getProgressColor = (status: AchievementStatus): string => {
-  switch (status) {
-    case 'granted':
-      return 'bg-green-500'
-    case 'unlocked':
-      return 'bg-blue-500'
-    default:
-      return 'bg-gray-300'
+// Helper function to get color based on progress
+const getProgressColor = (progress: number, total: number): string => {
+  if (progress >= total) {
+    return 'bg-green-500'  // Completed
+  } else if (progress > 0) {
+    return 'bg-blue-500'   // In progress
   }
+  return 'bg-gray-300'     // Not started
 }
 
 // Helper function to get status color
@@ -122,7 +120,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
                   <div className="mt-1 space-y-1">
                     <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
                       <div 
-                        className={`h-full ${getProgressColor(achievement.status)} transition-all duration-300`}
+                        className={`h-full ${getProgressColor(progress, achievement.steps)} transition-all duration-300`}
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
