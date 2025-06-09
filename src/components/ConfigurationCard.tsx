@@ -581,14 +581,7 @@ const ConfigurationCard = () => {
     fetchPlayerDetails()
   }
 
-  // Refresh player data when selected player changes
-  useEffect(() => {
-    if (selectedPlayer) {
-      console.log('Selected player changed, refreshing player data...')
-      fetchPlayerDetails()
-    }
-  }, [selectedPlayer, accountName, apiKey])
-
+  // Move handleFetchAchievements before its usage
   const handleFetchAchievements = async () => {
     if (!selectedPlayer || !accountName || !apiKey) {
       toast.error('Please select a player and ensure credentials are set')
@@ -618,6 +611,14 @@ const ConfigurationCard = () => {
     }
   }
 
+  // Refresh player data when selected player changes
+  useEffect(() => {
+    if (selectedPlayer) {
+      console.log('Selected player changed, refreshing player data...')
+      fetchPlayerDetails()
+    }
+  }, [selectedPlayer, accountName, apiKey])
+
   // Update useEffect to use selectedPlayer
   useEffect(() => {
     if (selectedPlayer && accountName && apiKey) {
@@ -632,7 +633,7 @@ const ConfigurationCard = () => {
       // Force a re-render of StreaksCard by updating a state
       setLastEventTime(Date.now())
     }
-  }, [selectedPlayer, accountName, apiKey])
+  }, [selectedPlayer, accountName, apiKey, handleFetchAchievements])
 
   // Merge achievement data with player status and steps
   const achievementsWithStatus = achievements?.map(achievement => ({
