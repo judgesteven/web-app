@@ -48,7 +48,7 @@ const ConfigurationCard = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [accountName, setAccountName] = useState('')
   const [apiKey, setApiKey] = useState('')
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string>('')
+  const [selectedPlayer, setSelectedPlayer] = useState<string>('')
   const [playerData, setPlayerData] = useState<{
     name?: string;
     imgUrl?: string;
@@ -98,7 +98,7 @@ const ConfigurationCard = () => {
 
   const handleSelectPlayer = (playerId: string | undefined) => {
     if (!playerId) return
-    setSelectedPlayerId(playerId)
+    setSelectedPlayer(playerId)
     fetchPlayerDetails()
   }
 
@@ -377,10 +377,10 @@ const ConfigurationCard = () => {
   }
 
   const fetchPlayerDetails = async () => {
-    if (!selectedPlayerId) return;
+    if (!selectedPlayer) return;
     
     // Fetch player details
-    const url = `https://api.gamelayer.co/api/v0/players/${selectedPlayerId}?account=${encodeURIComponent(accountName)}`;
+    const url = `https://api.gamelayer.co/api/v0/players/${selectedPlayer}?account=${encodeURIComponent(accountName)}`;
     const headers = {
       'Accept': 'application/json',
       'api-key': apiKey,
@@ -409,7 +409,7 @@ const ConfigurationCard = () => {
       setPlayerData(data);
 
       // Fetch missions data
-      const missionsUrl = `https://api.gamelayer.co/api/v0/missions?account=${encodeURIComponent(accountName.trim())}&player=${encodeURIComponent(selectedPlayerId)}`;
+      const missionsUrl = `https://api.gamelayer.co/api/v0/missions?account=${encodeURIComponent(accountName.trim())}&player=${encodeURIComponent(selectedPlayer)}`;
       console.log('Missions API Request:', { 
         method: 'GET', 
         url: missionsUrl, 
@@ -480,9 +480,9 @@ const ConfigurationCard = () => {
   }
 
   const handleGoClick = async () => {
-    if (!selectedPlayerId) return
+    if (!selectedPlayer) return
     
-    console.log('GO button clicked for player:', selectedPlayerId)
+    console.log('GO button clicked for player:', selectedPlayer)
     
     // Fetch achievements
     console.log('=== GET /achievements API Response ===')
@@ -520,7 +520,7 @@ const ConfigurationCard = () => {
       // Fetch player achievements
       console.log('=== GET /players/{playerId}/achievements API Response ===')
       try {
-        const playerAchievementsUrl = `https://api.gamelayer.co/api/v0/players/${selectedPlayerId}/achievements?account=${encodeURIComponent(accountName)}`
+        const playerAchievementsUrl = `https://api.gamelayer.co/api/v0/players/${selectedPlayer}/achievements?account=${encodeURIComponent(accountName)}`
         const playerAchievementsResponse = await fetch(playerAchievementsUrl, { headers })
         const playerAchievementsText = await playerAchievementsResponse.text()
         
@@ -573,18 +573,26 @@ const ConfigurationCard = () => {
     
     // Fetch player streaks
     console.log('Fetching player streaks...')
-    const streaksData = await fetchPlayerStreaks(selectedPlayerId)
+    const streaksData = await fetchPlayerStreaks(selectedPlayer)
     console.log('Player streaks data:', streaksData)
     
     // Then fetch player details as before
     fetchPlayerDetails()
   }
 
+  // Refresh player data when selected player changes
+  useEffect(() => {
+    if (selectedPlayer) {
+      console.log('Selected player changed, refreshing player data...')
+      fetchPlayerDetails()
+    }
+  }, [selectedPlayer, accountName, apiKey])
+
   const handleEventCompleted = async () => {
     console.log('Event completed, refreshing player data...')
     fetchPlayerDetails()
     // Also refresh achievements
-    if (selectedPlayerId) {
+    if (selectedPlayer) {
       try {
         const headers = {
           'Accept': 'application/json',
@@ -592,7 +600,7 @@ const ConfigurationCard = () => {
         }
         
         // Fetch player achievements
-        const playerAchievementsUrl = `https://api.gamelayer.co/api/v0/players/${selectedPlayerId}/achievements?account=${encodeURIComponent(accountName)}`
+        const playerAchievementsUrl = `https://api.gamelayer.co/api/v0/players/${selectedPlayer}/achievements?account=${encodeURIComponent(accountName)}`
         const playerAchievementsResponse = await fetch(playerAchievementsUrl, { headers })
         const playerAchievementsText = await playerAchievementsResponse.text()
         
@@ -690,8 +698,8 @@ const ConfigurationCard = () => {
             <select
               id="existingPlayer"
               className="flex-1 px-4 py-2 bg-white/50 border border-gray-200/50 rounded-3xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-transparent transition-all duration-200 text-sm text-gray-800 appearance-none"
-              value={selectedPlayerId}
-              onChange={e => setSelectedPlayerId(e.target.value)}
+              value={selectedPlayer}
+              onChange={e => setSelectedPlayer(e.target.value)}
             >
               <option value="">Select Player</option>
               {players.map((player, idx) => (
@@ -703,7 +711,7 @@ const ConfigurationCard = () => {
             <button
               className="w-20 px-4 py-2 bg-blue-500 text-white rounded-3xl hover:bg-blue-600 transition-all duration-200 disabled:opacity-60 whitespace-nowrap shadow-sm hover:shadow-md active:scale-[0.98] text-sm"
               onClick={handleGoClick}
-              disabled={!selectedPlayerId}
+              disabled={!selectedPlayer}
             >
               Go
             </button>
@@ -799,10 +807,10 @@ const ConfigurationCard = () => {
         team={playerData.team}
       />
 
-      {selectedPlayerId && (
+      {selectedPlayer && (
         <>
           <StreaksCard 
-            playerId={selectedPlayerId}
+            playerId={selectedPlayer}
             accountName={accountName}
             apiKey={apiKey}
             onEventCompleted={handleEventCompleted}
@@ -811,10 +819,10 @@ const ConfigurationCard = () => {
         </>
       )}
 
-      {selectedPlayerId && missions.length > 0 && (
+      {selectedPlayer && missions.length > 0 && (
         <MissionsSection 
           missions={missions} 
-          playerId={selectedPlayerId}
+          playerId={selectedPlayer}
           accountName={accountName}
           apiKey={apiKey}
           onEventCompleted={handleEventCompleted}

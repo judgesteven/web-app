@@ -1,4 +1,10 @@
+'use client'
+
 import ConfigurationCard from '@/components/ConfigurationCard'
+import { useState } from 'react'
+import { toast } from 'react-hot-toast'
+import ProfileCard from '@/components/ProfileCard'
+import MissionsSection from '@/components/MissionsSection'
 
 export default function Home() {
   return (
