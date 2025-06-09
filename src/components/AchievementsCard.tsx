@@ -11,12 +11,12 @@ interface Achievement {
   description: string
   steps: number
   stepsCompleted: number
-  status: AchievementStatus  // Explicitly type as AchievementStatus
+  status: AchievementStatus
   imgUrl?: string
 }
 
 interface AchievementsCardProps {
-  achievements: Array<Achievement>  // Explicitly type as array of Achievement
+  achievements: Array<Achievement>
   isLoading?: boolean
 }
 
