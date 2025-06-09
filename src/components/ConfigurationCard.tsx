@@ -581,7 +581,6 @@ const ConfigurationCard = () => {
     fetchPlayerDetails()
   }
 
-  // Move handleFetchAchievements before its usage
   const handleFetchAchievements = async () => {
     if (!selectedPlayer || !accountName || !apiKey) {
       toast.error('Please select a player and ensure credentials are set')
@@ -601,11 +600,18 @@ const ConfigurationCard = () => {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const data = await response.json()
-      setAchievements(Array.isArray(data) ? data : [])
+      const achievementsRecord = (Array.isArray(data) ? data : []).reduce((acc, achievement) => ({
+        ...acc,
+        [achievement.id]: {
+          status: achievement.status || null,
+          stepsCompleted: achievement.stepsCompleted || 0
+        }
+      }), {})
+      setPlayerAchievements(achievementsRecord)
     } catch (error) {
       console.error('Error fetching achievements:', error)
       toast.error('Failed to fetch achievements')
-      setAchievements([])
+      setPlayerAchievements({})
     } finally {
       setIsLoading(false)
     }
@@ -622,18 +628,11 @@ const ConfigurationCard = () => {
   // Update useEffect to use selectedPlayer
   useEffect(() => {
     if (selectedPlayer && accountName && apiKey) {
-      fetchPlayerDetails()
-    }
-  }, [selectedPlayer, accountName, apiKey])
-
-  // Update other useEffect to use selectedPlayer
-  useEffect(() => {
-    if (selectedPlayer && accountName && apiKey) {
       handleFetchAchievements()
       // Force a re-render of StreaksCard by updating a state
       setLastEventTime(Date.now())
     }
-  }, [selectedPlayer, accountName, apiKey, handleFetchAchievements])
+  }, [selectedPlayer, accountName, apiKey])
 
   // Merge achievement data with player status and steps
   const achievementsWithStatus = achievements?.map(achievement => ({
@@ -821,3 +820,4 @@ const ConfigurationCard = () => {
 }
 
 export default ConfigurationCard
+
