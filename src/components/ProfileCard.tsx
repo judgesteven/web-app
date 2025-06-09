@@ -46,4 +46,5 @@ const ProfileCard = ({ name, imgUrl, points, credits, level, team }: ProfileCard
   )
 }
 
-export default ProfileCard 
+export default ProfileCard
+

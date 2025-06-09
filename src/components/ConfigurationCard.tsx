@@ -1,8 +1,30 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import ProfileCard from './ProfileCard'
+import MissionsSection from './MissionsSection'
 import { toast } from 'react-hot-toast'
+
+interface Mission {
+  id: string
+  name: string
+  imgUrl?: string
+  description: string
+  category?: string
+  objectives?: {
+    eventId: string
+  }[]
+  reward?: {
+    points?: number
+    credits?: number
+  }
+  active?: {
+    to?: string
+  }
+  priority?: number
+  completed?: boolean
+  isAvailable: boolean
+}
 
 const ConfigurationCard = () => {
   const [showAvatarModal, setShowAvatarModal] = useState(false)
@@ -24,6 +46,7 @@ const ConfigurationCard = () => {
     team?: string;
     teamId?: string;
   }>({})
+  const [missions, setMissions] = useState<Mission[]>([])
 
   // Load stored credentials on component mount
   useEffect(() => {
@@ -297,13 +320,17 @@ const ConfigurationCard = () => {
 
   const fetchPlayerDetails = async () => {
     if (!selectedPlayerId) return;
+    
+    // Fetch player details
     const url = `https://api.gamelayer.co/api/v0/players/${selectedPlayerId}?account=${encodeURIComponent(accountName)}`;
     const headers = {
       'Accept': 'application/json',
       'api-key': apiKey,
     };
-    console.log('API Request:', { method: 'GET', url, headers });
+    console.log('Player API Request:', { method: 'GET', url, headers });
+    
     try {
+      // Fetch player data
       const response = await fetch(url, { headers });
       const text = await response.text();
       let data;
@@ -313,7 +340,7 @@ const ConfigurationCard = () => {
         console.error('API Error: Response is not valid JSON', text);
         return;
       }
-      console.log('API Response:', data);
+      console.log('Player API Response:', data);
       
       // If player has a team ID, fetch team details
       if (data.team) {
@@ -322,10 +349,82 @@ const ConfigurationCard = () => {
       }
       
       setPlayerData(data);
+
+      // Fetch missions data
+      const missionsUrl = `https://api.gamelayer.co/api/v0/missions?account=${encodeURIComponent(accountName.trim())}&player=${encodeURIComponent(selectedPlayerId)}`;
+      console.log('Missions API Request:', { 
+        method: 'GET', 
+        url: missionsUrl, 
+        headers: { ...headers, 'api-key': '***' }
+      });
+      
+      const missionsResponse = await fetch(missionsUrl, { headers });
+      const missionsText = await missionsResponse.text();
+      
+      console.log('Missions API Response Status:', {
+        status: missionsResponse.status,
+        statusText: missionsResponse.statusText,
+        headers: Object.fromEntries(missionsResponse.headers.entries())
+      });
+      
+      if (!missionsResponse.ok) {
+        console.error('Missions API Error:', {
+          status: missionsResponse.status,
+          statusText: missionsResponse.statusText,
+          body: missionsText
+        });
+        setMissions([]);
+        return;
+      }
+
+      let missionsData;
+      try {
+        missionsData = JSON.parse(missionsText);
+        console.log('Raw Missions API Response:', missionsData);
+        
+        // Transform the missions data to match our interface
+        const transformedMissions = missionsData.map((mission: any) => {
+          // Extract event IDs from the objectives.events array
+          const eventIds = mission.objectives?.events?.map((event: any) => ({
+            eventId: event.id
+          })) || [];
+
+          return {
+            id: mission.id,
+            name: mission.name,
+            imgUrl: mission.imgUrl,
+            description: mission.description,
+            category: mission.category,
+            objectives: eventIds, // Use the extracted event IDs
+            reward: {
+              points: mission.reward?.points,
+              credits: mission.reward?.credits
+            },
+            active: {
+              to: mission.active?.to
+            },
+            priority: mission.priority,
+            completed: mission.completed,
+            isAvailable: mission.isAvailable
+          };
+        }).filter((mission: any) => mission.isAvailable); // Only show available missions
+        
+        console.log('Transformed Missions:', transformedMissions);
+        setMissions(transformedMissions);
+      } catch (e) {
+        console.error('Missions API Error: Failed to parse response', e);
+        setMissions([]);
+      }
     } catch (error) {
       console.error('API Error:', error);
+      setMissions([]);
     }
   }
+
+  const handleEventCompleted = useCallback(() => {
+    console.log('Event completed, refreshing player data...')
+    fetchPlayerDetails()
+  }, [selectedPlayerId, accountName, apiKey])
 
   return (
     <div className="space-y-8">
@@ -475,6 +574,15 @@ const ConfigurationCard = () => {
         level={playerData.level?.name}
         team={playerData.team}
       />
+      {selectedPlayerId && missions.length > 0 && (
+        <MissionsSection 
+          missions={missions} 
+          playerId={selectedPlayerId}
+          accountName={accountName}
+          apiKey={apiKey}
+          onEventCompleted={handleEventCompleted}
+        />
+      )}
     </div>
   )
 }
