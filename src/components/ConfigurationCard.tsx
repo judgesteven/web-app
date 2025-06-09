@@ -31,11 +31,11 @@ interface Mission {
 interface Achievement {
   id: string
   name: string
-  imgUrl?: string
+  description: string
   steps: number
-  isAvailable: boolean
-  status?: 'unlocked' | 'granted' | null
-  stepsCompleted?: number
+  stepsCompleted: number
+  status: 'unlocked' | 'granted' | null
+  imgUrl?: string
 }
 
 const ConfigurationCard = () => {
@@ -653,8 +653,10 @@ const ConfigurationCard = () => {
     const playerAchievement = playerAchievements[achievement.id]
     return {
       ...achievement,
-      status: playerAchievement?.status || null,
-      stepsCompleted: playerAchievement?.stepsCompleted || 0
+      status: playerAchievement?.status ?? null,  // Use nullish coalescing to ensure null if undefined
+      stepsCompleted: playerAchievement?.stepsCompleted ?? 0,  // Use nullish coalescing for steps too
+      description: achievement.description || '',  // Ensure description is always a string
+      steps: achievement.steps || 0  // Ensure steps is always a number
     }
   })
 
@@ -815,7 +817,10 @@ const ConfigurationCard = () => {
             apiKey={apiKey}
             onEventCompleted={handleEventCompleted}
           />
-          <AchievementsCard achievements={achievementsWithStatus} />
+          <AchievementsCard 
+            achievements={achievementsWithStatus} 
+            isLoading={isLoading}
+          />
         </>
       )}
 
