@@ -5,18 +5,38 @@ import React from 'react'
 interface Achievement {
   id: string
   name: string
-  imgUrl?: string
+  description: string
   steps: number
-  isAvailable: boolean
-  status?: 'unlocked' | 'granted' | null
-  stepsCompleted?: number
+  stepsCompleted: number
+  status: 'unlocked' | 'granted' | null
+  imgUrl?: string
 }
 
 interface AchievementsCardProps {
   achievements: Achievement[]
+  isLoading?: boolean
 }
 
-const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements }) => {
+const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoading = false }) => {
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-md mx-auto space-y-4">
+        <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mx-4" />
+        <div className="grid grid-cols-3 gap-3">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="p-3 rounded-xl bg-gray-100/50 animate-pulse">
+              <div className="w-16 h-16 bg-gray-200 rounded-lg mx-auto" />
+              <div className="mt-2 space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
+                <div className="h-2 bg-gray-200 rounded w-1/2 mx-auto" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   if (!achievements || achievements.length === 0) {
     return (
       <div className="w-full max-w-md mx-auto space-y-4">
@@ -30,41 +50,37 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements }) => 
     )
   }
 
-  const getStatusColor = (status: 'unlocked' | 'granted' | null) => {
+  const getStatusColor = (status: Achievement['status']) => {
     switch (status) {
       case 'unlocked':
         return 'text-blue-600'
       case 'granted':
         return 'text-green-600'
       default:
-        return 'text-gray-500'
+        return 'text-gray-400'
     }
   }
 
-  const getStatusIcon = (status: 'unlocked' | 'granted' | null) => {
+  const getStatusIcon = (status: Achievement['status']) => {
     switch (status) {
       case 'unlocked':
         return (
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         )
       case 'granted':
         return (
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         )
       default:
-        return (
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        )
+        return null
     }
   }
 
-  const getProgressColor = (status: 'unlocked' | 'granted' | null) => {
+  const getProgressColor = (status: Achievement['status']) => {
     switch (status) {
       case 'unlocked':
         return 'bg-blue-600'
@@ -80,8 +96,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements }) => 
       <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
         {achievements.map((achievement) => {
-          const status = achievement.status || null
-          const isActive = status === 'unlocked' || status === 'granted'
+          const isActive = achievement.status === 'unlocked' || achievement.status === 'granted'
           const progress = achievement.stepsCompleted || 0
           const progressPercent = Math.min(100, (progress / achievement.steps) * 100)
           
@@ -120,7 +135,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements }) => 
                     {/* Progress bar */}
                     <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
                       <div 
-                        className={`h-full ${getProgressColor(status)} transition-all duration-300`}
+                        className={`h-full ${getProgressColor(achievement.status)} transition-all duration-300`}
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
@@ -133,10 +148,10 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements }) => 
                         </svg>
                         {progress}/{achievement.steps}
                       </span>
-                      {status && (
-                        <span className={`flex items-center gap-0.5 ${getStatusColor(status)}`}>
-                          {getStatusIcon(status)}
-                          {status}
+                      {achievement.status && (
+                        <span className={`flex items-center gap-0.5 ${getStatusColor(achievement.status)}`}>
+                          {getStatusIcon(achievement.status)}
+                          {achievement.status}
                         </span>
                       )}
                     </div>
