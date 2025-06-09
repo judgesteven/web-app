@@ -638,7 +638,6 @@ const ConfigurationCard = () => {
   // Merge achievement data with player status and steps
   const achievementsWithStatus = achievements?.map(achievement => ({
     ...achievement,
-    status: playerAchievements[achievement.id]?.status || null,
     stepsCompleted: playerAchievements[achievement.id]?.stepsCompleted || 0
   })) || []
 
