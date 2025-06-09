@@ -630,16 +630,16 @@ const ConfigurationCard = () => {
       stepsCompleted: playerAchievement?.stepsCompleted ?? 0,
       description: achievement.description || '',
       steps: achievement.steps || 0
-    } as const
-  }) as Array<{
-    id: string
-    name: string
-    description: string
-    steps: number
-    stepsCompleted: number
-    status: 'unlocked' | 'granted' | null  // Explicitly type the transformed data
-    imgUrl?: string
-  }>
+    } satisfies {
+      id: string
+      name: string
+      description: string
+      steps: number
+      stepsCompleted: number
+      status: 'unlocked' | 'granted' | null
+      imgUrl?: string
+    }
+  })
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
