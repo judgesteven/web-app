@@ -35,7 +35,6 @@ interface Achievement {
   description: string
   steps: number
   stepsCompleted: number
-  status: 'unlocked' | 'granted' | null
   imgUrl?: string
 }
 
