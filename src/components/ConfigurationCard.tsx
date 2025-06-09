@@ -590,13 +590,34 @@ const ConfigurationCard = () => {
     }
   }, [selectedPlayer, accountName, apiKey])
 
+  // Fetch achievements data
+  const handleFetchAchievements = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/achievements?accountName=${encodeURIComponent(accountName)}&apiKey=${encodeURIComponent(apiKey)}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch achievements')
+      }
+      const data = await response.json()
+      setAchievements(data)
+    } catch (error) {
+      console.error('Error fetching achievements:', error)
+      toast.error('Failed to load achievements')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Add a callback for when an event is completed
   const handleEventCompleted = useCallback(() => {
     console.log('Event completed, refreshing player data...')
     // Refresh both player details and streak data
     fetchPlayerDetails()
+    // Also refresh achievements to update their status
+    handleFetchAchievements()
     // Force a re-render of StreaksCard by updating a state
     setLastEventTime(Date.now())
-  }, [selectedPlayer, accountName, apiKey, fetchPlayerDetails, setLastEventTime])
+  }, [selectedPlayer, accountName, apiKey, fetchPlayerDetails, handleFetchAchievements, setLastEventTime])
 
   // Merge achievement data with player status and steps
   const achievementsWithStatus = achievements.map(achievement => {
