@@ -6,7 +6,7 @@ import MissionsSection from './MissionsSection'
 import StreaksCard from './StreaksCard'
 import AchievementsCard from './AchievementsCard'
 import { toast } from 'react-hot-toast'
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/outline'
 
 interface Mission {
   id: string
