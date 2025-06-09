@@ -222,24 +222,20 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
     setVisibleCount(3)
   }
 
-  const getTimeRemaining = (endDate: string) => {
-    const end = new Date(endDate)
+  const formatTimeRemaining = (to: string) => {
+    const end = new Date(to)
     const now = new Date()
     const diff = end.getTime() - now.getTime()
-
+    
     if (diff <= 0) return 'Expired'
-
+    
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-
-    if (days > 0) {
-      return `${days}d ${hours}h left`
-    } else if (hours > 0) {
-      return `${hours}h ${minutes}m left`
-    } else {
-      return `${minutes}m left`
-    }
+    
+    if (days > 0) return `${days}d ${hours}h`
+    if (hours > 0) return `${hours}h ${minutes}m`
+    return `${minutes}m`
   }
 
   if (!missions || missions.length === 0) {
@@ -352,7 +348,7 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <span className="text-xs font-medium text-gray-700">
-                          {getTimeRemaining(mission.active.to)}
+                          {formatTimeRemaining(mission.active.to)}
                         </span>
                       </div>
                     )}
