@@ -51,9 +51,8 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
     })
   }, [missions])
   
-  // Filter out hidden missions and sort by priority
+  // Filter and sort missions by priority
   const filteredAndSortedMissions = [...missions]
-    .filter(mission => mission.category !== 'Hidden')
     .sort((a, b) => {
       // Handle undefined/null priorities
       const priorityA = a.priority ?? 0
@@ -249,20 +248,14 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
         {visibleMissions.map((mission) => {
           const isCompletingMission = isCompleting.has(mission.id)
           const hasEventId = !!mission.objectives?.[0]?.eventId
-
-          console.log('Rendering mission:', {
-            id: mission.id,
-            name: mission.name,
-            hasEventId,
-            objectives: mission.objectives
-          })
+          const isHidden = mission.category === 'Hidden'
 
           return (
             <div 
               key={mission.id} 
               className={`bg-white/80 backdrop-blur-xl rounded-2xl p-4 shadow-lg border border-gray-100/50 hover:shadow-xl transition-all duration-200 ${
                 isCompletingMission ? 'opacity-75' : ''
-              }`}
+              } ${isHidden ? 'border-purple-200 bg-purple-50/50' : ''}`}
             >
               <div className="flex gap-4">
                 {/* Mission Image */}
@@ -283,7 +276,14 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
                 {/* Mission Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-semibold text-gray-900 text-lg">{mission.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900 text-lg">{mission.name}</h3>
+                      {isHidden && (
+                        <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                          Hidden
+                        </span>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={() => {
@@ -316,6 +316,7 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
                       )}
                     </button>
                   </div>
+
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">{mission.description}</p>
                   
                   {/* Rewards and Time Remaining */}
@@ -341,7 +342,7 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
                         </span>
                       </div>
                     )}
-                    
+
                     {mission.active?.to && (
                       <div className="flex items-center gap-1 bg-gray-50 px-2 py-0.5 rounded-full">
                         <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

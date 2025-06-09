@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import ProfileCard from './ProfileCard'
 import MissionsSection from './MissionsSection'
+import StreaksCard from './StreaksCard'
 import { toast } from 'react-hot-toast'
 
 interface Mission {
@@ -318,6 +319,50 @@ const ConfigurationCard = () => {
     }
   }
 
+  const fetchPlayerStreaks = async (playerId: string) => {
+    try {
+      const url = `https://api.gamelayer.co/api/v0/players/${playerId}/streaks?account=${encodeURIComponent(accountName)}`
+      const headers = {
+        'Accept': 'application/json',
+        'api-key': apiKey
+      }
+
+      console.log('Fetching player streaks:', {
+        url,
+        headers: { ...headers, 'api-key': '***' }
+      })
+
+      const response = await fetch(url, { headers })
+      const responseText = await response.text()
+      
+      console.log('Player streaks response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: responseText
+      })
+
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (e) {
+        console.error('Failed to parse streaks response as JSON:', responseText)
+        return null
+      }
+
+      if (!response.ok) {
+        console.error('Failed to fetch player streaks:', data)
+        return null
+      }
+
+      console.log('Successfully fetched player streaks:', data)
+      return data
+    } catch (error) {
+      console.error('Error fetching player streaks:', error)
+      return null
+    }
+  }
+
   const fetchPlayerDetails = async () => {
     if (!selectedPlayerId) return;
     
@@ -421,13 +466,27 @@ const ConfigurationCard = () => {
     }
   }
 
+  const handleGoClick = async () => {
+    if (!selectedPlayerId) return
+    
+    console.log('GO button clicked for player:', selectedPlayerId)
+    
+    // Fetch player streaks first
+    console.log('Fetching player streaks...')
+    const streaksData = await fetchPlayerStreaks(selectedPlayerId)
+    console.log('Player streaks data:', streaksData)
+    
+    // Then fetch player details as before
+    fetchPlayerDetails()
+  }
+
   const handleEventCompleted = useCallback(() => {
     console.log('Event completed, refreshing player data...')
     fetchPlayerDetails()
   }, [selectedPlayerId, accountName, apiKey])
 
   return (
-    <div className="space-y-8">
+    <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
       <div className="w-full max-w-md mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 relative">
         <div className="space-y-4">
           {/* Account Name */}
@@ -478,7 +537,7 @@ const ConfigurationCard = () => {
             </select>
             <button
               className="w-20 px-4 py-2 bg-blue-500 text-white rounded-3xl hover:bg-blue-600 transition-all duration-200 disabled:opacity-60 whitespace-nowrap shadow-sm hover:shadow-md active:scale-[0.98] text-sm"
-              onClick={fetchPlayerDetails}
+              onClick={handleGoClick}
               disabled={!selectedPlayerId}
             >
               Go
@@ -574,6 +633,15 @@ const ConfigurationCard = () => {
         level={playerData.level?.name}
         team={playerData.team}
       />
+
+      {selectedPlayerId && (
+        <StreaksCard
+          playerId={selectedPlayerId}
+          accountName={accountName}
+          apiKey={apiKey}
+        />
+      )}
+
       {selectedPlayerId && missions.length > 0 && (
         <MissionsSection 
           missions={missions} 
