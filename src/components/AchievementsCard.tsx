@@ -80,7 +80,8 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements }) => 
       <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
         {achievements.map((achievement) => {
-          const isActive = achievement.status === 'unlocked' || achievement.status === 'granted'
+          const status = achievement.status || null
+          const isActive = status === 'unlocked' || status === 'granted'
           const progress = achievement.stepsCompleted || 0
           const progressPercent = Math.min(100, (progress / achievement.steps) * 100)
           
@@ -119,7 +120,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements }) => 
                     {/* Progress bar */}
                     <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
                       <div 
-                        className={`h-full ${getProgressColor(achievement.status || null)} transition-all duration-300`}
+                        className={`h-full ${getProgressColor(status)} transition-all duration-300`}
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
@@ -132,10 +133,10 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements }) => 
                         </svg>
                         {progress}/{achievement.steps}
                       </span>
-                      {achievement.status && (
-                        <span className={`flex items-center gap-0.5 ${getStatusColor(achievement.status)}`}>
-                          {getStatusIcon(achievement.status)}
-                          {achievement.status}
+                      {status && (
+                        <span className={`flex items-center gap-0.5 ${getStatusColor(status)}`}>
+                          {getStatusIcon(status)}
+                          {status}
                         </span>
                       )}
                     </div>
