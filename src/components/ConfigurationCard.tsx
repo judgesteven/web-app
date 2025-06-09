@@ -622,23 +622,17 @@ const ConfigurationCard = () => {
   // Merge achievement data with player status and steps
   const achievementsWithStatus = achievements.map(achievement => {
     const playerAchievement = playerAchievements[achievement.id]
-    // Ensure status is always defined by using null as default
-    const status = playerAchievement?.status ?? null
+    // Explicitly type and ensure status is never undefined
+    const status: 'unlocked' | 'granted' | null = playerAchievement?.status ?? null
     return {
-      ...achievement,
-      status,  // This will always be 'unlocked' | 'granted' | null
-      stepsCompleted: playerAchievement?.stepsCompleted ?? 0,
+      id: achievement.id,
+      name: achievement.name,
       description: achievement.description || '',
-      steps: achievement.steps || 0
-    } satisfies {
-      id: string
-      name: string
-      description: string
-      steps: number
-      stepsCompleted: number
-      status: 'unlocked' | 'granted' | null
-      imgUrl?: string
-    }
+      steps: achievement.steps || 0,
+      stepsCompleted: playerAchievement?.stepsCompleted ?? 0,
+      status,  // This is now guaranteed to be 'unlocked' | 'granted' | null
+      imgUrl: achievement.imgUrl
+    } as const
   })
 
   return (
