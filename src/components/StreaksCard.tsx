@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { CheckIcon } from '@heroicons/react/24/outline'
+import { CheckIcon } from '@heroicons/react/outline'
 
 interface Streak {
   id: string
@@ -43,23 +43,27 @@ const StreaksCard: React.FC<StreaksCardProps> = ({
 
       const response = await fetch(url, { headers })
       if (!response.ok) {
-        console.error('Failed to fetch mission details:', await response.text())
+        // Silently handle 404s for deleted missions
+        if (response.status === 404) {
+          return undefined
+        }
+        // Log other errors but don't throw
+        console.warn('Failed to fetch mission details:', await response.text())
         return undefined
       }
 
       const data = await response.json()
-      console.log('Mission details:', data)
-
       // Extract event ID from mission objectives
       const eventId = data.objectives?.events?.[0]?.id
       if (!eventId) {
-        console.error('No event ID found in mission objectives:', data)
+        console.warn('No event ID found in mission objectives:', data)
         return undefined
       }
 
       return eventId
     } catch (error) {
-      console.error('Error fetching mission details:', error)
+      // Log but don't throw errors
+      console.warn('Error fetching mission details:', error)
       return undefined
     }
   }
@@ -75,12 +79,6 @@ const StreaksCard: React.FC<StreaksCardProps> = ({
           'api-key': apiKey
         }
 
-        console.log('Fetching streaks with:', {
-          playerId,
-          accountName,
-          streaksUrl
-        })
-
         const streaksResponse = await fetch(streaksUrl, { headers })
 
         if (!streaksResponse.ok) {
@@ -88,7 +86,6 @@ const StreaksCard: React.FC<StreaksCardProps> = ({
         }
 
         const streaksData = await streaksResponse.json()
-        console.log('Parsed streaks data:', JSON.stringify(streaksData, null, 2))
 
         // Process started streaks
         const activeStreaks = await Promise.all(
@@ -96,14 +93,13 @@ const StreaksCard: React.FC<StreaksCardProps> = ({
             // Extract mission ID from objectives
             const missionId = streak.objectives?.[0]
             if (!missionId) {
-              console.error('No mission ID found for streak:', streak)
               return null
             }
 
             // Get event ID from mission details
             const eventId = await getMissionEventId(missionId)
             if (!eventId) {
-              console.error('Could not get event ID for mission:', missionId)
+              // Silently skip streaks with deleted missions
               return null
             }
 
@@ -111,8 +107,8 @@ const StreaksCard: React.FC<StreaksCardProps> = ({
               id: streak.id,
               name: streak.name,
               description: streak.description,
-              current: streak.actions?.count || 0,  // Use actions.count for current progress
-              target: streak.countLimit || 7,  // Use countLimit if available, default to 7
+              current: streak.actions?.count || 0,
+              target: streak.countLimit || 7,
               reward: streak.reward,
               eventId,
               missionId
@@ -120,12 +116,13 @@ const StreaksCard: React.FC<StreaksCardProps> = ({
           })
         )
 
-        // Filter out any null streaks
+        // Filter out any null streaks (including those with deleted missions)
         const validStreaks = activeStreaks.filter((streak): streak is Streak => streak !== null)
         setStreaks(validStreaks)
 
       } catch (error) {
-        console.error('Error fetching data:', error)
+        console.error('Error fetching streaks data:', error)
+        setStreaks([]) // Set empty array on error
       } finally {
         setIsLoading(false)
       }
