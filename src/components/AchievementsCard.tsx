@@ -84,8 +84,8 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
       <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
         {achievements.map((achievement) => {
-          // Ensure status is always AchievementStatus type
-          const status: AchievementStatus = achievement.status ?? null
+          // Force status to be AchievementStatus type at point of use
+          const status = (achievement.status ?? null) as AchievementStatus
           const isActive = status !== null
           const progress = achievement.stepsCompleted || 0
           const progressPercent = Math.min(100, (progress / achievement.steps) * 100)
