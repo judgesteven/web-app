@@ -2,13 +2,16 @@
 
 import React from 'react'
 
+// Define the possible status values
+type AchievementStatus = 'unlocked' | 'granted' | null
+
 interface Achievement {
   id: string
   name: string
   description: string
   steps: number
   stepsCompleted: number
-  status: 'unlocked' | 'granted' | null
+  status: AchievementStatus | undefined  // Allow undefined in the interface
   imgUrl?: string
 }
 
@@ -17,13 +20,17 @@ interface AchievementsCardProps {
   isLoading?: boolean
 }
 
-// Helper function to ensure status is never undefined
-const getAchievementStatus = (status: Achievement['status'] | undefined): Achievement['status'] => {
-  return status ?? null
+// Type guard to ensure status is never undefined
+const isAchievementStatus = (status: AchievementStatus | undefined): status is AchievementStatus => {
+  return status === 'unlocked' || status === 'granted' || status === null
 }
 
 // Helper function to get color based on status
-const getProgressColor = (status: Achievement['status']) => {
+const getProgressColor = (status: AchievementStatus | undefined): string => {
+  if (!isAchievementStatus(status)) {
+    return 'bg-gray-300'  // Default color for undefined status
+  }
+  
   switch (status) {
     case 'granted':
       return 'bg-green-500'
@@ -35,12 +42,6 @@ const getProgressColor = (status: Achievement['status']) => {
 }
 
 const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoading = false }) => {
-  // Transform achievements to ensure status is never undefined
-  const transformedAchievements = achievements.map(achievement => ({
-    ...achievement,
-    status: getAchievementStatus(achievement.status)
-  }))
-
   if (isLoading) {
     return (
       <div className="w-full max-w-md mx-auto space-y-4">
@@ -60,7 +61,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
     )
   }
 
-  if (!transformedAchievements.length) {
+  if (!achievements.length) {
     return (
       <div className="w-full max-w-md mx-auto space-y-4">
         <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
@@ -73,7 +74,11 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
     )
   }
 
-  const getStatusColor = (status: Achievement['status']) => {
+  const getStatusColor = (status: AchievementStatus | undefined) => {
+    if (!isAchievementStatus(status)) {
+      return 'text-gray-400'
+    }
+    
     switch (status) {
       case 'unlocked':
         return 'text-blue-600'
@@ -84,7 +89,11 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
     }
   }
 
-  const getStatusIcon = (status: Achievement['status']) => {
+  const getStatusIcon = (status: AchievementStatus | undefined) => {
+    if (!isAchievementStatus(status)) {
+      return null
+    }
+    
     switch (status) {
       case 'unlocked':
         return (
@@ -107,8 +116,8 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
     <div className="w-full max-w-md mx-auto space-y-4">
       <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
-        {transformedAchievements.map((achievement) => {
-          const isActive = achievement.status === 'unlocked' || achievement.status === 'granted'
+        {achievements.map((achievement) => {
+          const isActive = isAchievementStatus(achievement.status)
           const progress = achievement.stepsCompleted || 0
           const progressPercent = Math.min(100, (progress / achievement.steps) * 100)
           
@@ -160,7 +169,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
                         </svg>
                         {progress}/{achievement.steps}
                       </span>
-                      {achievement.status && (
+                      {isAchievementStatus(achievement.status) && (
                         <span className={`flex items-center gap-0.5 ${getStatusColor(achievement.status)}`}>
                           {getStatusIcon(achievement.status)}
                           {achievement.status}
