@@ -11,7 +11,7 @@ interface Achievement {
   description: string
   steps: number
   stepsCompleted: number
-  status: AchievementStatus | undefined  // Allow undefined in the interface
+  status: AchievementStatus  // No longer allowing undefined
   imgUrl?: string
 }
 
@@ -20,17 +20,8 @@ interface AchievementsCardProps {
   isLoading?: boolean
 }
 
-// Type guard to ensure status is never undefined
-const isAchievementStatus = (status: AchievementStatus | undefined): status is AchievementStatus => {
-  return status === 'unlocked' || status === 'granted' || status === null
-}
-
 // Helper function to get color based on status
-const getProgressColor = (status: AchievementStatus | undefined): string => {
-  if (!isAchievementStatus(status)) {
-    return 'bg-gray-300'  // Default color for undefined status
-  }
-  
+const getProgressColor = (status: AchievementStatus): string => {
   switch (status) {
     case 'granted':
       return 'bg-green-500'
@@ -74,11 +65,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
     )
   }
 
-  const getStatusColor = (status: AchievementStatus | undefined) => {
-    if (!isAchievementStatus(status)) {
-      return 'text-gray-400'
-    }
-    
+  const getStatusColor = (status: AchievementStatus) => {
     switch (status) {
       case 'unlocked':
         return 'text-blue-600'
@@ -89,11 +76,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
     }
   }
 
-  const getStatusIcon = (status: AchievementStatus | undefined) => {
-    if (!isAchievementStatus(status)) {
-      return null
-    }
-    
+  const getStatusIcon = (status: AchievementStatus) => {
     switch (status) {
       case 'unlocked':
         return (
@@ -117,7 +100,6 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
       <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
         {achievements.map((achievement) => {
-          const isActive = isAchievementStatus(achievement.status)
           const progress = achievement.stepsCompleted || 0
           const progressPercent = Math.min(100, (progress / achievement.steps) * 100)
           
@@ -125,13 +107,11 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
             <div 
               key={achievement.id}
               className={`p-3 rounded-xl shadow-lg border ${
-                isActive 
-                  ? 'bg-white/80 backdrop-blur-xl border-gray-100/50' 
-                  : 'bg-gray-100/50 backdrop-blur-sm border-gray-200/50'
+                getProgressColor(achievement.status)
               }`}
             >
               <div className="flex flex-col items-center gap-2">
-                <div className={`w-16 h-16 ${!isActive && 'opacity-50'}`}>
+                <div className={`w-16 h-16`}>
                   {achievement.imgUrl ? (
                     <img 
                       src={achievement.imgUrl} 
@@ -147,9 +127,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
                   )}
                 </div>
                 <div className="text-center w-full">
-                  <h3 className={`text-sm font-medium line-clamp-2 ${
-                    isActive ? 'text-gray-900' : 'text-gray-500'
-                  }`}>
+                  <h3 className={`text-sm font-medium line-clamp-2`}>
                     {achievement.name}
                   </h3>
                   <div className="mt-1 space-y-1">
@@ -161,20 +139,10 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
                       />
                     </div>
                     <div className="flex items-center justify-center gap-1 text-xs">
-                      <span className={`flex items-center gap-0.5 ${
-                        isActive ? 'text-gray-500' : 'text-gray-400'
-                      }`}>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        {progress}/{achievement.steps}
+                      <span className={`flex items-center gap-0.5 ${getStatusColor(achievement.status)}`}>
+                        {getStatusIcon(achievement.status)}
+                        {achievement.status}
                       </span>
-                      {isAchievementStatus(achievement.status) && (
-                        <span className={`flex items-center gap-0.5 ${getStatusColor(achievement.status)}`}>
-                          {getStatusIcon(achievement.status)}
-                          {achievement.status}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
