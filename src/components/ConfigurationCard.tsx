@@ -595,7 +595,7 @@ const ConfigurationCard = () => {
     fetchPlayerDetails()
     // Force a re-render of StreaksCard by updating a state
     setLastEventTime(Date.now())
-  }, [selectedPlayer, accountName, apiKey])
+  }, [selectedPlayer, accountName, apiKey, fetchPlayerDetails])
 
   // Merge achievement data with player status and steps
   const achievementsWithStatus = achievements.map(achievement => {
