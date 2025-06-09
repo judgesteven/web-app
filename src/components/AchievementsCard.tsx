@@ -119,7 +119,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements }) => 
                     {/* Progress bar */}
                     <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
                       <div 
-                        className={`h-full ${getProgressColor(achievement.status)} transition-all duration-300`}
+                        className={`h-full ${getProgressColor(achievement.status || null)} transition-all duration-300`}
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
