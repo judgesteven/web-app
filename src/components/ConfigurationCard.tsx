@@ -591,7 +591,7 @@ const ConfigurationCard = () => {
   }, [selectedPlayer, accountName, apiKey])
 
   // Fetch achievements data
-  const handleFetchAchievements = async () => {
+  const handleFetchAchievements = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await fetch(`/api/achievements?accountName=${encodeURIComponent(accountName)}&apiKey=${encodeURIComponent(apiKey)}`)
@@ -606,7 +606,7 @@ const ConfigurationCard = () => {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [accountName, apiKey])
 
   // Add a callback for when an event is completed
   const handleEventCompleted = useCallback(() => {
