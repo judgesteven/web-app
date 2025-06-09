@@ -6,6 +6,7 @@ import MissionsSection from './MissionsSection'
 import StreaksCard from './StreaksCard'
 import AchievementsCard from './AchievementsCard'
 import { toast } from 'react-hot-toast'
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/outline'
 
 interface Mission {
   id: string
@@ -595,7 +596,7 @@ const ConfigurationCard = () => {
     fetchPlayerDetails()
     // Force a re-render of StreaksCard by updating a state
     setLastEventTime(Date.now())
-  }, [selectedPlayer, accountName, apiKey, fetchPlayerDetails])
+  }, [selectedPlayer, accountName, apiKey, fetchPlayerDetails, setLastEventTime])
 
   // Merge achievement data with player status and steps
   const achievementsWithStatus = achievements.map(achievement => {
