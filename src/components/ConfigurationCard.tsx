@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import ProfileCard from './ProfileCard'
 import MissionsSection from './MissionsSection'
 import StreaksCard from './StreaksCard'
+import AchievementsCard from './AchievementsCard'
 import { toast } from 'react-hot-toast'
 
 interface Mission {
@@ -27,6 +28,16 @@ interface Mission {
   isAvailable: boolean
 }
 
+interface Achievement {
+  id: string
+  name: string
+  imgUrl?: string
+  steps: number
+  isAvailable: boolean
+  status?: 'unlocked' | 'granted' | null
+  stepsCompleted?: number
+}
+
 const ConfigurationCard = () => {
   const [showAvatarModal, setShowAvatarModal] = useState(false)
   const [selectedAvatar, setSelectedAvatar] = useState('')
@@ -48,6 +59,8 @@ const ConfigurationCard = () => {
     teamId?: string;
   }>({})
   const [missions, setMissions] = useState<Mission[]>([])
+  const [achievements, setAchievements] = useState<Achievement[]>([])
+  const [playerAchievements, setPlayerAchievements] = useState<Record<string, { status: 'unlocked' | 'granted'; stepsCompleted: number }>>({})
 
   // Load stored credentials on component mount
   useEffect(() => {
@@ -471,7 +484,94 @@ const ConfigurationCard = () => {
     
     console.log('GO button clicked for player:', selectedPlayerId)
     
-    // Fetch player streaks first
+    // Fetch achievements
+    console.log('=== GET /achievements API Response ===')
+    try {
+      const achievementsUrl = `https://api.gamelayer.co/api/v0/achievements?account=${encodeURIComponent(accountName)}`
+      const headers = {
+        'Accept': 'application/json',
+        'api-key': apiKey
+      }
+
+      const achievementsResponse = await fetch(achievementsUrl, { headers })
+      const achievementsText = await achievementsResponse.text()
+      
+      // Log the raw response exactly as received
+      console.log('Raw achievements response:', achievementsText)
+
+      if (!achievementsResponse.ok) {
+        console.error('Failed to fetch achievements:', achievementsText)
+      } else {
+        try {
+          const achievementsData = JSON.parse(achievementsText)
+          console.log('Parsed achievements data:', achievementsData)
+          
+          // The achievements response is an array of achievement objects
+          if (Array.isArray(achievementsData)) {
+            setAchievements(achievementsData)
+          } else {
+            console.error('Unexpected achievements data format:', achievementsData)
+          }
+        } catch (e) {
+          console.error('Failed to parse achievements JSON:', e)
+        }
+      }
+
+      // Fetch player achievements
+      console.log('=== GET /players/{playerId}/achievements API Response ===')
+      try {
+        const playerAchievementsUrl = `https://api.gamelayer.co/api/v0/players/${selectedPlayerId}/achievements?account=${encodeURIComponent(accountName)}`
+        const playerAchievementsResponse = await fetch(playerAchievementsUrl, { headers })
+        const playerAchievementsText = await playerAchievementsResponse.text()
+        
+        console.log('Raw player achievements response:', playerAchievementsText)
+
+        if (!playerAchievementsResponse.ok) {
+          console.error('Failed to fetch player achievements:', playerAchievementsText)
+        } else {
+          try {
+            const playerAchievementsData = JSON.parse(playerAchievementsText)
+            console.log('Parsed player achievements data:', playerAchievementsData)
+            
+            // Create a map of achievement ID to status and steps completed
+            const statusMap: Record<string, { status: 'unlocked' | 'granted'; stepsCompleted: number }> = {}
+            
+            // Add completed achievements as 'granted' with full steps
+            if (playerAchievementsData?.achievements?.completed) {
+              playerAchievementsData.achievements.completed.forEach((achievement: any) => {
+                statusMap[achievement.id] = {
+                  status: 'granted',
+                  stepsCompleted: achievement.steps || 0
+                }
+              })
+            }
+            
+            // Add started achievements as 'unlocked' with their current steps
+            if (playerAchievementsData?.achievements?.started) {
+              playerAchievementsData.achievements.started.forEach((achievement: any) => {
+                // Only set as unlocked if not already granted
+                if (!statusMap[achievement.id]) {
+                  statusMap[achievement.id] = {
+                    status: 'unlocked',
+                    stepsCompleted: achievement.count || 0  // Use count field for progress
+                  }
+                }
+              })
+            }
+            
+            setPlayerAchievements(statusMap)
+          } catch (e) {
+            console.error('Failed to parse player achievements JSON:', e)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching player achievements:', error)
+      }
+    } catch (error) {
+      console.error('Error fetching achievements:', error)
+    }
+    
+    // Fetch player streaks
     console.log('Fetching player streaks...')
     const streaksData = await fetchPlayerStreaks(selectedPlayerId)
     console.log('Player streaks data:', streaksData)
@@ -480,10 +580,75 @@ const ConfigurationCard = () => {
     fetchPlayerDetails()
   }
 
-  const handleEventCompleted = useCallback(() => {
+  const handleEventCompleted = async () => {
     console.log('Event completed, refreshing player data...')
     fetchPlayerDetails()
-  }, [selectedPlayerId, accountName, apiKey])
+    // Also refresh achievements
+    if (selectedPlayerId) {
+      try {
+        const headers = {
+          'Accept': 'application/json',
+          'api-key': apiKey
+        }
+        
+        // Fetch player achievements
+        const playerAchievementsUrl = `https://api.gamelayer.co/api/v0/players/${selectedPlayerId}/achievements?account=${encodeURIComponent(accountName)}`
+        const playerAchievementsResponse = await fetch(playerAchievementsUrl, { headers })
+        const playerAchievementsText = await playerAchievementsResponse.text()
+        
+        if (!playerAchievementsResponse.ok) {
+          console.error('Failed to fetch player achievements:', playerAchievementsText)
+        } else {
+          try {
+            const playerAchievementsData = JSON.parse(playerAchievementsText)
+            console.log('Refreshed player achievements data:', playerAchievementsData)
+            
+            // Create a map of achievement ID to status and steps completed
+            const statusMap: Record<string, { status: 'unlocked' | 'granted'; stepsCompleted: number }> = {}
+            
+            // Add completed achievements as 'granted' with full steps
+            if (playerAchievementsData?.achievements?.completed) {
+              playerAchievementsData.achievements.completed.forEach((achievement: any) => {
+                statusMap[achievement.id] = {
+                  status: 'granted',
+                  stepsCompleted: achievement.steps || 0
+                }
+              })
+            }
+            
+            // Add started achievements as 'unlocked' with their current steps
+            if (playerAchievementsData?.achievements?.started) {
+              playerAchievementsData.achievements.started.forEach((achievement: any) => {
+                // Only set as unlocked if not already granted
+                if (!statusMap[achievement.id]) {
+                  statusMap[achievement.id] = {
+                    status: 'unlocked',
+                    stepsCompleted: achievement.count || 0  // Use count field for progress
+                  }
+                }
+              })
+            }
+            
+            setPlayerAchievements(statusMap)
+          } catch (e) {
+            console.error('Failed to parse refreshed player achievements JSON:', e)
+          }
+        }
+      } catch (error) {
+        console.error('Error refreshing player achievements:', error)
+      }
+    }
+  }
+
+  // Merge achievement data with player status and steps
+  const achievementsWithStatus = achievements.map(achievement => {
+    const playerAchievement = playerAchievements[achievement.id]
+    return {
+      ...achievement,
+      status: playerAchievement?.status || null,
+      stepsCompleted: playerAchievement?.stepsCompleted || 0
+    }
+  })
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
@@ -635,11 +800,15 @@ const ConfigurationCard = () => {
       />
 
       {selectedPlayerId && (
-        <StreaksCard
-          playerId={selectedPlayerId}
-          accountName={accountName}
-          apiKey={apiKey}
-        />
+        <>
+          <StreaksCard 
+            playerId={selectedPlayerId}
+            accountName={accountName}
+            apiKey={apiKey}
+            onEventCompleted={handleEventCompleted}
+          />
+          <AchievementsCard achievements={achievementsWithStatus} />
+        </>
       )}
 
       {selectedPlayerId && missions.length > 0 && (
