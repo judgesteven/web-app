@@ -65,32 +65,14 @@ const getStatusIcon = (status: AchievementStatus) => {
 }
 
 const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoading = false }) => {
-  if (isLoading) {
+  // Show empty state if no achievements or not loaded yet
+  if (!achievements.length || isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 animate-pulse">
-        <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mx-4" />
-        <div className="grid grid-cols-3 gap-3">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="p-3 rounded-xl bg-gray-100/50 animate-pulse">
-              <div className="w-16 h-16 bg-gray-200 rounded-lg mx-auto" />
-              <div className="mt-2 space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
-                <div className="h-2 bg-gray-200 rounded w-1/2 mx-auto" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (!achievements.length) {
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="w-full max-w-md mx-auto space-y-4">
         <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
         <div className="w-full p-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100/50">
           <div className="text-sm text-gray-500 text-center py-4">
-            No achievements available
+            {isLoading ? 'Loading achievements...' : 'Select a player and press GO to view achievements'}
           </div>
         </div>
       </div>
@@ -102,6 +84,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
       <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
         {achievements.map((achievement) => {
+          // Always show as inactive before GO button is pressed
           const isActive = achievement.status !== null
           const progress = achievement.stepsCompleted || 0
           const progressPercent = Math.min(100, (progress / achievement.steps) * 100)
@@ -113,10 +96,10 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
                 isActive 
                   ? 'bg-white/80 backdrop-blur-xl border-gray-100/50' 
                   : 'bg-gray-100/50 backdrop-blur-sm border-gray-200/50'
-              }`}
+              } transition-all duration-200`}
             >
               <div className="flex flex-col items-center gap-2">
-                <div className={`w-16 h-16 ${!isActive && 'opacity-50'}`}>
+                <div className={`w-16 h-16 ${!isActive && 'opacity-50 grayscale'}`}>
                   {achievement.imgUrl ? (
                     <img 
                       src={achievement.imgUrl} 
@@ -153,7 +136,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
                         </svg>
                         {progress}/{achievement.steps}
                       </span>
-                      {isActive && (
+                      {isActive && achievement.status && (
                         <span className={`flex items-center gap-0.5 ${getStatusColor(achievement.status)}`}>
                           {getStatusIcon(achievement.status)}
                           {achievement.status}
