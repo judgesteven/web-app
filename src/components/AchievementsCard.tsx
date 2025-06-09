@@ -35,7 +35,7 @@ const getProgressColor = (status: AchievementStatus): string => {
 const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoading = false }) => {
   if (isLoading) {
     return (
-      <div className="w-full max-w-md mx-auto space-y-4">
+      <div className="bg-white rounded-lg shadow-md p-6 animate-pulse">
         <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mx-4" />
         <div className="grid grid-cols-3 gap-3">
           {[...Array(6)].map((_, i) => (
@@ -54,7 +54,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
 
   if (!achievements.length) {
     return (
-      <div className="w-full max-w-md mx-auto space-y-4">
+      <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
         <div className="w-full p-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100/50">
           <div className="text-sm text-gray-500 text-center py-4">
@@ -96,8 +96,8 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold mb-4">Achievements</h2>
+    <div className="w-full max-w-md mx-auto space-y-4">
+      <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
         {achievements.map((achievement) => {
           const isActive = achievement.status !== null
@@ -119,12 +119,12 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
                     <img 
                       src={achievement.imgUrl} 
                       alt={achievement.name}
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain rounded-lg"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <div className="w-full h-full rounded-lg bg-gray-200 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                       </svg>
                     </div>
                   )}
