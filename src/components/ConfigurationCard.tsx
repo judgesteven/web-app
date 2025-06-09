@@ -35,6 +35,7 @@ interface Achievement {
   description: string
   steps: number
   stepsCompleted: number
+  status: 'unlocked' | 'granted' | null
   imgUrl?: string
 }
 
@@ -581,44 +582,6 @@ const ConfigurationCard = () => {
     fetchPlayerDetails()
   }
 
-  const handleFetchAchievements = async () => {
-    if (!selectedPlayer || !accountName || !apiKey) {
-      toast.error('Please select a player and ensure credentials are set')
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const url = `https://api.gamelayer.co/api/v0/players/${selectedPlayer}/achievements?account=${encodeURIComponent(accountName.trim())}`
-      const headers = {
-        'Accept': 'application/json',
-        'api-key': apiKey,
-      }
-
-      const response = await fetch(url, { headers })
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      const data = await response.json()
-      const achievementsRecord = (Array.isArray(data) ? data : []).reduce((acc, achievement) => ({
-        ...acc,
-        [achievement.id]: {
-          // Keep existing status if it exists, otherwise use new status
-          status: playerAchievements[achievement.id]?.status || achievement.status || null,
-          // Update steps completed
-          stepsCompleted: achievement.stepsCompleted || 0
-        }
-      }), { ...playerAchievements }) // Start with existing achievements
-      setPlayerAchievements(achievementsRecord)
-    } catch (error) {
-      console.error('Error fetching achievements:', error)
-      toast.error('Failed to fetch achievements')
-      // Don't clear achievements on error, just keep existing ones
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   // Refresh player data when selected player changes
   useEffect(() => {
     if (selectedPlayer) {
@@ -627,21 +590,56 @@ const ConfigurationCard = () => {
     }
   }, [selectedPlayer, accountName, apiKey])
 
-  // Update useEffect to use selectedPlayer
-  useEffect(() => {
-    if (selectedPlayer && accountName && apiKey) {
-      handleFetchAchievements()
-      // Force a re-render of StreaksCard by updating a state
-      setLastEventTime(Date.now())
+  // Fetch achievements data
+  const handleFetchAchievements = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(`https://api.stevenjudge.com/achievements?accountName=${encodeURIComponent(accountName)}&apiKey=${encodeURIComponent(apiKey)}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch achievements')
+      }
+      const data = await response.json()
+      setAchievements(data)
+    } catch (error) {
+      console.error('Error fetching achievements:', error)
+      toast.error('Failed to load achievements')
+    } finally {
+      setIsLoading(false)
     }
-  }, [selectedPlayer, accountName, apiKey])
+  }, [accountName, apiKey])
+
+  // Add a callback for when an event is completed
+  const handleEventCompleted = useCallback(() => {
+    console.log('Event completed, refreshing player data...')
+    // Refresh both player details and streak data
+    fetchPlayerDetails()
+    // Also refresh achievements to update their status
+    handleFetchAchievements()
+    // Force a re-render of StreaksCard by updating a state
+    setLastEventTime(Date.now())
+  }, [selectedPlayer, accountName, apiKey, fetchPlayerDetails, handleFetchAchievements, setLastEventTime])
 
   // Merge achievement data with player status and steps
-  const achievementsWithStatus = achievements?.map(achievement => ({
-    ...achievement,
-    stepsCompleted: playerAchievements[achievement.id]?.stepsCompleted || 0,
-    status: playerAchievements[achievement.id]?.status || null
-  })) || []
+  const achievementsWithStatus = achievements.map(achievement => {
+    const playerAchievement = playerAchievements[achievement.id]
+    // Ensure status is always defined by using null as default
+    const status = playerAchievement?.status ?? null
+    return {
+      ...achievement,
+      status,  // This will always be 'unlocked' | 'granted' | null
+      stepsCompleted: playerAchievement?.stepsCompleted ?? 0,
+      description: achievement.description || '',
+      steps: achievement.steps || 0
+    } as const
+  }) as Array<{
+    id: string
+    name: string
+    description: string
+    steps: number
+    stepsCompleted: number
+    status: 'unlocked' | 'granted' | null  // Explicitly type the transformed data
+    imgUrl?: string
+  }>
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
@@ -799,7 +797,7 @@ const ConfigurationCard = () => {
             playerId={selectedPlayer}
             accountName={accountName}
             apiKey={apiKey}
-            onEventCompleted={handleFetchAchievements}
+            onEventCompleted={handleEventCompleted}
           />
           <AchievementsCard 
             achievements={achievementsWithStatus} 
@@ -814,7 +812,7 @@ const ConfigurationCard = () => {
           playerId={selectedPlayer}
           accountName={accountName}
           apiKey={apiKey}
-          onEventCompleted={handleFetchAchievements}
+          onEventCompleted={handleEventCompleted}
         />
       )}
     </div>
@@ -822,4 +820,3 @@ const ConfigurationCard = () => {
 }
 
 export default ConfigurationCard
-
