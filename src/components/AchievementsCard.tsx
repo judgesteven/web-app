@@ -17,7 +17,30 @@ interface AchievementsCardProps {
   isLoading?: boolean
 }
 
+// Helper function to ensure status is never undefined
+const getAchievementStatus = (status: Achievement['status'] | undefined): Achievement['status'] => {
+  return status ?? null
+}
+
+// Helper function to get color based on status
+const getProgressColor = (status: Achievement['status']) => {
+  switch (status) {
+    case 'granted':
+      return 'bg-green-500'
+    case 'unlocked':
+      return 'bg-blue-500'
+    default:
+      return 'bg-gray-300'
+  }
+}
+
 const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoading = false }) => {
+  // Transform achievements to ensure status is never undefined
+  const transformedAchievements = achievements.map(achievement => ({
+    ...achievement,
+    status: getAchievementStatus(achievement.status)
+  }))
+
   if (isLoading) {
     return (
       <div className="w-full max-w-md mx-auto space-y-4">
@@ -37,7 +60,7 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
     )
   }
 
-  if (!achievements || achievements.length === 0) {
+  if (!transformedAchievements.length) {
     return (
       <div className="w-full max-w-md mx-auto space-y-4">
         <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
@@ -80,22 +103,11 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
     }
   }
 
-  const getProgressColor = (status: Achievement['status']) => {
-    switch (status) {
-      case 'unlocked':
-        return 'bg-blue-600'
-      case 'granted':
-        return 'bg-green-600'
-      default:
-        return 'bg-gray-300'
-    }
-  }
-
   return (
     <div className="w-full max-w-md mx-auto space-y-4">
       <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
-        {achievements.map((achievement) => {
+        {transformedAchievements.map((achievement) => {
           const isActive = achievement.status === 'unlocked' || achievement.status === 'granted'
           const progress = achievement.stepsCompleted || 0
           const progressPercent = Math.min(100, (progress / achievement.steps) * 100)

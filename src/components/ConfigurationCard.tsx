@@ -606,7 +606,7 @@ const ConfigurationCard = () => {
       stepsCompleted: playerAchievement?.stepsCompleted ?? 0,  // Use nullish coalescing for steps too
       description: achievement.description || '',  // Ensure description is always a string
       steps: achievement.steps || 0  // Ensure steps is always a number
-    }
+    } as const  // Use const assertion to ensure type inference is exact
   })
 
   return (
