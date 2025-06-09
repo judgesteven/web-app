@@ -11,46 +11,57 @@ interface Achievement {
   description: string
   steps: number
   stepsCompleted: number
-  status?: string  // Make status optional
+  status: AchievementStatus  // No longer allowing undefined
   imgUrl?: string
 }
 
 interface AchievementsCardProps {
-  achievements: Array<Achievement>
+  achievements: Array<Achievement>  // Explicitly type as array of Achievement
   isLoading?: boolean
 }
 
 // Helper function to get color based on status
-const getProgressColor = (status?: string): string => {
-  if (status === 'granted') return 'bg-green-500'
-  if (status === 'unlocked') return 'bg-blue-500'
-  return 'bg-gray-300'
+const getProgressColor = (status: AchievementStatus): string => {
+  switch (status) {
+    case 'granted':
+      return 'bg-green-500'
+    case 'unlocked':
+      return 'bg-blue-500'
+    default:
+      return 'bg-gray-300'
+  }
 }
 
 // Helper function to get status color
-const getStatusColor = (status?: string): string => {
-  if (status === 'granted') return 'text-green-600'
-  if (status === 'unlocked') return 'text-blue-600'
-  return 'text-gray-500'
+const getStatusColor = (status: AchievementStatus): string => {
+  switch (status) {
+    case 'unlocked':
+      return 'text-blue-500'
+    case 'granted':
+      return 'text-green-500'
+    default:
+      return 'text-gray-400'
+  }
 }
 
 // Helper function to get status icon
-const getStatusIcon = (status?: string): React.ReactNode => {
-  if (status === 'granted') {
-    return (
-      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-      </svg>
-    )
+const getStatusIcon = (status: AchievementStatus) => {
+  switch (status) {
+    case 'unlocked':
+      return (
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      )
+    case 'granted':
+      return (
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      )
+    default:
+      return null
   }
-  if (status === 'unlocked') {
-    return (
-      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-      </svg>
-    )
-  }
-  return null
 }
 
 const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoading = false }) => {
@@ -73,7 +84,8 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
       <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
         {achievements.map((achievement) => {
-          const isActive = Boolean(achievement.status)
+          // Always show as inactive before GO button is pressed
+          const isActive = achievement.status !== null
           const progress = achievement.stepsCompleted || 0
           const progressPercent = Math.min(100, (progress / achievement.steps) * 100)
 

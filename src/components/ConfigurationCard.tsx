@@ -6,6 +6,7 @@ import MissionsSection from './MissionsSection'
 import StreaksCard from './StreaksCard'
 import AchievementsCard from './AchievementsCard'
 import { toast } from 'react-hot-toast'
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/outline'
 
 interface Mission {
   id: string
@@ -38,18 +39,6 @@ interface Achievement {
   imgUrl?: string
 }
 
-const ChevronUpIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-  </svg>
-)
-
-const ChevronDownIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-  </svg>
-)
-
 const ConfigurationCard = () => {
   const [showAvatarModal, setShowAvatarModal] = useState(false)
   const [selectedAvatar, setSelectedAvatar] = useState('')
@@ -60,8 +49,7 @@ const ConfigurationCard = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [accountName, setAccountName] = useState('')
   const [apiKey, setApiKey] = useState('')
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string>('')
-  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null)
+  const [selectedPlayer, setSelectedPlayer] = useState<string>('')
   const [playerData, setPlayerData] = useState<{
     name?: string;
     imgUrl?: string;
@@ -74,7 +62,7 @@ const ConfigurationCard = () => {
   const [missions, setMissions] = useState<Mission[]>([])
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [playerAchievements, setPlayerAchievements] = useState<Record<string, { status: 'unlocked' | 'granted'; stepsCompleted: number }>>({})
-  const [lastEventTime, setLastEventTime] = useState(Date.now())
+  const [lastEventTime, setLastEventTime] = useState(0)
 
   // Load stored credentials on component mount
   useEffect(() => {
@@ -110,8 +98,9 @@ const ConfigurationCard = () => {
     toast.success('Credentials stored successfully!')
   }
 
-  const handlePlayerSelect = (playerId: string) => {
-    setSelectedPlayerId(playerId)
+  const handleSelectPlayer = (playerId: string | undefined) => {
+    if (!playerId) return
+    setSelectedPlayer(playerId)
     fetchPlayerDetails()
   }
 
@@ -602,8 +591,7 @@ const ConfigurationCard = () => {
   }, [selectedPlayer, accountName, apiKey])
 
   // Fetch achievements data
-  const handleFetchAchievements = async () => {
-    if (!selectedPlayerId) return
+  const handleFetchAchievements = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await fetch(`/api/achievements?accountName=${encodeURIComponent(accountName)}&apiKey=${encodeURIComponent(apiKey)}`)
@@ -618,32 +606,40 @@ const ConfigurationCard = () => {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [accountName, apiKey])
 
-  // Update useEffect to use handleFetchAchievements after it's defined
-  useEffect(() => {
-    if (selectedPlayerId && accountName && apiKey) {
-      handleFetchAchievements()
-      // Force a re-render of StreaksCard by updating a state
-      setLastEventTime(Date.now())
-    }
-  }, [selectedPlayerId, accountName, apiKey])
+  // Add a callback for when an event is completed
+  const handleEventCompleted = useCallback(() => {
+    console.log('Event completed, refreshing player data...')
+    // Refresh both player details and streak data
+    fetchPlayerDetails()
+    // Also refresh achievements to update their status
+    handleFetchAchievements()
+    // Force a re-render of StreaksCard by updating a state
+    setLastEventTime(Date.now())
+  }, [selectedPlayer, accountName, apiKey, fetchPlayerDetails, handleFetchAchievements, setLastEventTime])
 
   // Merge achievement data with player status and steps
   const achievementsWithStatus = achievements.map(achievement => {
     const playerAchievement = playerAchievements[achievement.id]
-    // Explicitly type and ensure status is never undefined
-    const status: 'unlocked' | 'granted' | null = playerAchievement?.status ?? null
+    // Ensure status is always defined by using null as default
+    const status = playerAchievement?.status ?? null
     return {
-      id: achievement.id,
-      name: achievement.name,
-      description: achievement.description || '',
-      steps: achievement.steps || 0,
+      ...achievement,
+      status,  // This will always be 'unlocked' | 'granted' | null
       stepsCompleted: playerAchievement?.stepsCompleted ?? 0,
-      status,  // This is now guaranteed to be 'unlocked' | 'granted' | null
-      imgUrl: achievement.imgUrl
+      description: achievement.description || '',
+      steps: achievement.steps || 0
     } as const
-  })
+  }) as Array<{
+    id: string
+    name: string
+    description: string
+    steps: number
+    stepsCompleted: number
+    status: 'unlocked' | 'granted' | null  // Explicitly type the transformed data
+    imgUrl?: string
+  }>
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
@@ -683,9 +679,10 @@ const ConfigurationCard = () => {
           {/* Select Existing Player and Go Button */}
           <div className="flex gap-2">
             <select
-              value={selectedPlayerId}
-              onChange={(e) => handlePlayerSelect(e.target.value)}
-              className="w-full p-2 border rounded-lg bg-white/80 backdrop-blur-xl"
+              id="existingPlayer"
+              className="flex-1 px-4 py-2 bg-white/50 border border-gray-200/50 rounded-3xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-transparent transition-all duration-200 text-sm text-gray-800 appearance-none"
+              value={selectedPlayer}
+              onChange={e => setSelectedPlayer(e.target.value)}
             >
               <option value="">Select Player</option>
               {players.map((player, idx) => (
@@ -800,7 +797,7 @@ const ConfigurationCard = () => {
             playerId={selectedPlayer}
             accountName={accountName}
             apiKey={apiKey}
-            onEventCompleted={handleFetchAchievements}
+            onEventCompleted={handleEventCompleted}
           />
           <AchievementsCard 
             achievements={achievementsWithStatus} 
@@ -815,7 +812,7 @@ const ConfigurationCard = () => {
           playerId={selectedPlayer}
           accountName={accountName}
           apiKey={apiKey}
-          onEventCompleted={handleFetchAchievements}
+          onEventCompleted={handleEventCompleted}
         />
       )}
     </div>
