@@ -11,7 +11,7 @@ interface Achievement {
   description: string
   steps: number
   stepsCompleted: number
-  status: AchievementStatus
+  status: AchievementStatus  // Required, non-undefined status
   imgUrl?: string
 }
 
@@ -20,9 +20,8 @@ interface AchievementsCardProps {
   isLoading?: boolean
 }
 
-// Helper function to get color based on status - now accepts undefined
-const getProgressColor = (status: AchievementStatus | undefined): string => {
-  if (!status) return 'bg-gray-300'  // Handle both null and undefined
+// Helper function to get color based on status
+const getProgressColor = (status: AchievementStatus): string => {
   switch (status) {
     case 'granted':
       return 'bg-green-500'
@@ -80,11 +79,17 @@ const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoa
     )
   }
 
+  // Transform achievements to ensure status is never undefined
+  const achievementsWithStatus = achievements.map(achievement => ({
+    ...achievement,
+    status: achievement.status ?? null as AchievementStatus
+  }))
+
   return (
     <div className="w-full max-w-md mx-auto space-y-4">
       <h2 className="text-lg font-semibold text-gray-800 px-4">Achievements</h2>
       <div className="grid grid-cols-3 gap-3">
-        {achievements.map((achievement) => {
+        {achievementsWithStatus.map((achievement) => {
           const isActive = achievement.status !== null
           const progress = achievement.stepsCompleted || 0
           const progressPercent = Math.min(100, (progress / achievement.steps) * 100)
