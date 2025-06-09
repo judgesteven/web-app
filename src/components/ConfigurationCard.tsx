@@ -61,6 +61,7 @@ const ConfigurationCard = () => {
   const [missions, setMissions] = useState<Mission[]>([])
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [playerAchievements, setPlayerAchievements] = useState<Record<string, { status: 'unlocked' | 'granted'; stepsCompleted: number }>>({})
+  const [lastEventTime, setLastEventTime] = useState(0)
 
   // Load stored credentials on component mount
   useEffect(() => {
@@ -588,65 +589,13 @@ const ConfigurationCard = () => {
     }
   }, [selectedPlayer, accountName, apiKey])
 
-  const handleEventCompleted = async () => {
+  const handleEventCompleted = useCallback(() => {
     console.log('Event completed, refreshing player data...')
+    // Refresh both player details and streak data
     fetchPlayerDetails()
-    // Also refresh achievements
-    if (selectedPlayer) {
-      try {
-        const headers = {
-          'Accept': 'application/json',
-          'api-key': apiKey
-        }
-        
-        // Fetch player achievements
-        const playerAchievementsUrl = `https://api.gamelayer.co/api/v0/players/${selectedPlayer}/achievements?account=${encodeURIComponent(accountName)}`
-        const playerAchievementsResponse = await fetch(playerAchievementsUrl, { headers })
-        const playerAchievementsText = await playerAchievementsResponse.text()
-        
-        if (!playerAchievementsResponse.ok) {
-          console.error('Failed to fetch player achievements:', playerAchievementsText)
-        } else {
-          try {
-            const playerAchievementsData = JSON.parse(playerAchievementsText)
-            console.log('Refreshed player achievements data:', playerAchievementsData)
-            
-            // Create a map of achievement ID to status and steps completed
-            const statusMap: Record<string, { status: 'unlocked' | 'granted'; stepsCompleted: number }> = {}
-            
-            // Add completed achievements as 'granted' with full steps
-            if (playerAchievementsData?.achievements?.completed) {
-              playerAchievementsData.achievements.completed.forEach((achievement: any) => {
-                statusMap[achievement.id] = {
-                  status: 'granted',
-                  stepsCompleted: achievement.steps || 0
-                }
-              })
-            }
-            
-            // Add started achievements as 'unlocked' with their current steps
-            if (playerAchievementsData?.achievements?.started) {
-              playerAchievementsData.achievements.started.forEach((achievement: any) => {
-                // Only set as unlocked if not already granted
-                if (!statusMap[achievement.id]) {
-                  statusMap[achievement.id] = {
-                    status: 'unlocked',
-                    stepsCompleted: achievement.count || 0  // Use count field for progress
-                  }
-                }
-              })
-            }
-            
-            setPlayerAchievements(statusMap)
-          } catch (e) {
-            console.error('Failed to parse refreshed player achievements JSON:', e)
-          }
-        }
-      } catch (error) {
-        console.error('Error refreshing player achievements:', error)
-      }
-    }
-  }
+    // Force a re-render of StreaksCard by updating a state
+    setLastEventTime(Date.now())
+  }, [selectedPlayer, accountName, apiKey])
 
   // Merge achievement data with player status and steps
   const achievementsWithStatus = achievements.map(achievement => {
@@ -812,6 +761,7 @@ const ConfigurationCard = () => {
       {selectedPlayer && (
         <>
           <StreaksCard 
+            key={lastEventTime}
             playerId={selectedPlayer}
             accountName={accountName}
             apiKey={apiKey}
