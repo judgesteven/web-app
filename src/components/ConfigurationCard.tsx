@@ -8,7 +8,7 @@ import AchievementsCard from './AchievementsCard'
 import MysteryCard from './MysteryCard'
 import LeaderboardCard from './LeaderboardCard'
 import { toast } from 'react-hot-toast'
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
+import { ChevronDoubleUpIcon, ChevronDoubleDownIcon } from '@heroicons/react/24/outline'
 
 interface Mission {
   id: string
@@ -686,9 +686,14 @@ const ConfigurationCard = () => {
             {/* Avatar Selection */}
             <button
               onClick={() => setShowAvatarModal(true)}
-              className="w-full px-4 py-2 bg-white/50 border border-gray-200/50 rounded-3xl shadow-sm hover:border-blue-500/50 transition-all duration-200 text-sm text-gray-600 mb-3 hover:bg-white/70 active:scale-[0.98]"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              {selectedAvatar ? 'Change Avatar' : 'Select Player Avatar'}
+              {showAvatarModal ? (
+                <ChevronDoubleUpIcon className="w-4 h-4" />
+              ) : (
+                <ChevronDoubleDownIcon className="w-4 h-4" />
+              )}
+              Change Avatar
             </button>
 
             {/* Add Button */}
