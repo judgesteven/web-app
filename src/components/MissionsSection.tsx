@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { toast } from 'react-hot-toast'
 
 interface Mission {
   id: string
@@ -7,17 +8,28 @@ interface Mission {
   description: string
   category?: string
   objectives?: {
-    eventId: string
-  }[]
+    quizzId: string
+    surveyId: string
+    events: Array<{ id: string }>
+    missions: Array<any>
+  }
   reward?: {
     points?: number
     credits?: number
+    achievements?: Array<any>
   }
   active?: {
+    from?: string
     to?: string
   }
   priority?: number
   completed?: boolean
+  isAvailable: boolean
+  period?: string
+  countLimit?: number
+  limitCount?: boolean
+  timeToComplete?: number
+  timeToRestart?: number
 }
 
 interface MissionsSectionProps {
@@ -42,11 +54,14 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
   useEffect(() => {
     console.log('Missions data received:', missions)
     missions.forEach(mission => {
-      console.log('Mission:', {
+      console.log('Mission details:', {
         id: mission.id,
         name: mission.name,
         objectives: mission.objectives,
-        hasEventId: !!mission.objectives?.[0]?.eventId
+        hasEventId: !!mission.objectives?.events?.[0]?.id,
+        rawObjectives: JSON.stringify(mission.objectives, null, 2),
+        category: mission.category,
+        isAvailable: mission.isAvailable
       })
     })
   }, [missions])
@@ -127,29 +142,20 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
 
   const handleComplete = async (mission: Mission) => {
     console.log('Complete button clicked for mission:', mission)
-    console.log('Mission objectives:', mission.objectives)
+    console.log('Mission objectives:', JSON.stringify(mission.objectives, null, 2))
     
-    if (!mission.objectives?.[0]?.eventId) {
-      console.error('No event ID found for mission:', mission.id)
+    // Get the first event ID from the events array in objectives
+    const eventId = mission.objectives?.events?.[0]?.id
+    if (!eventId) {
+      console.error('No event ID found in mission objectives:', mission.objectives)
+      toast.error('This mission cannot be completed yet')
       return
     }
 
-    const eventId = mission.objectives[0].eventId
     console.log('Found event ID:', eventId)
-    
     setIsCompleting(prev => new Set(prev).add(mission.id))
 
     try {
-      // First, get event details
-      console.log('Fetching event details for event ID:', eventId)
-      const eventDetails = await getEventDetails(eventId)
-      console.log('Event details response:', eventDetails)
-      
-      if (!eventDetails) {
-        console.error('Could not fetch event details, aborting completion')
-        return
-      }
-
       // Now proceed with completion
       const url = `https://api.gamelayer.co/api/v0/events/${eventId}/complete`
       const headers = {
@@ -187,11 +193,13 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
         data = JSON.parse(responseText)
       } catch (e) {
         console.error('Failed to parse completion response as JSON:', responseText)
+        toast.error('Failed to complete mission')
         return
       }
 
       if (!response.ok) {
         console.error('Failed to complete event:', data)
+        toast.error(data.message || 'Failed to complete mission')
         return
       }
 
@@ -204,6 +212,7 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
       }
     } catch (error) {
       console.error('Error completing event:', error)
+      toast.error('Failed to complete mission')
     } finally {
       setIsCompleting(prev => {
         const newSet = new Set(prev)
@@ -247,15 +256,18 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
       <div className="space-y-4">
         {visibleMissions.map((mission) => {
           const isCompletingMission = isCompleting.has(mission.id)
-          const hasEventId = !!mission.objectives?.[0]?.eventId
+          const eventId = mission.objectives?.events?.[0]?.id
           const isHidden = mission.category === 'Hidden'
+          const canComplete = !!eventId && !mission.completed && mission.isAvailable
 
           return (
             <div 
               key={mission.id} 
               className={`bg-white/80 backdrop-blur-xl rounded-2xl p-4 shadow-lg border border-gray-100/50 hover:shadow-xl transition-all duration-200 ${
                 isCompletingMission ? 'opacity-75' : ''
-              } ${isHidden ? 'border-purple-200 bg-purple-50/50' : ''}`}
+              } ${isHidden ? 'border-purple-200 bg-purple-50/50' : ''} ${
+                mission.completed ? 'border-green-200 bg-green-50/50' : ''
+              }`}
             >
               <div className="flex gap-4">
                 {/* Mission Image */}
@@ -283,6 +295,11 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
                           Hidden
                         </span>
                       )}
+                      {mission.completed && (
+                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                          Completed
+                        </span>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -290,11 +307,11 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
                         console.log('Button clicked for mission:', mission.id)
                         handleComplete(mission)
                       }}
-                      disabled={isCompletingMission || !hasEventId}
+                      disabled={isCompletingMission || !canComplete}
                       className={`px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200 ${
                         isCompletingMission
                           ? 'bg-gray-100 text-gray-500 cursor-wait'
-                          : hasEventId
+                          : canComplete
                           ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                           : 'bg-gray-100 text-gray-500 cursor-not-allowed'
                       }`}
@@ -305,6 +322,13 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                           </svg>
                           Completing...
+                        </span>
+                      ) : mission.completed ? (
+                        <span className="flex items-center gap-1">
+                          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Completed
                         </span>
                       ) : (
                         <span className="flex items-center gap-1">
