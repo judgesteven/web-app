@@ -8,7 +8,33 @@ import AchievementsCard from './AchievementsCard'
 import MysteryCard from './MysteryCard'
 import LeaderboardCard from './LeaderboardCard'
 import { toast } from 'react-hot-toast'
-import { ChevronDoubleUpIcon, ChevronDoubleDownIcon } from '@heroicons/react/24/outline'
+
+// Custom SVG icons
+const ChevronUpIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={2}
+    stroke="currentColor"
+    {...props}
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+  </svg>
+)
+
+const ChevronDownIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth={2}
+    stroke="currentColor"
+    {...props}
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+  </svg>
+)
 
 interface Mission {
   id: string
@@ -686,14 +712,14 @@ const ConfigurationCard = () => {
             {/* Avatar Selection */}
             <button
               onClick={() => setShowAvatarModal(true)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="w-full px-4 py-2 bg-white/50 border border-gray-200/50 rounded-3xl shadow-sm hover:border-blue-500/50 transition-all duration-200 text-sm text-gray-600 mb-3 hover:bg-white/70 active:scale-[0.98]"
             >
               {showAvatarModal ? (
-                <ChevronDoubleUpIcon className="w-4 h-4" />
+                <ChevronUpIcon className="w-4 h-4 inline-block mr-2" />
               ) : (
-                <ChevronDoubleDownIcon className="w-4 h-4" />
+                <ChevronDownIcon className="w-4 h-4 inline-block mr-2" />
               )}
-              Change Avatar
+              {selectedAvatar ? 'Change Avatar' : 'Select Player Avatar'}
             </button>
 
             {/* Add Button */}
