@@ -8,16 +8,15 @@ import AchievementsCard from './AchievementsCard'
 import MysteryCard from './MysteryCard'
 import LeaderboardCard from './LeaderboardCard'
 import { toast } from 'react-hot-toast'
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/outline'
 
 // Custom SVG Icons
-const ChevronUpIconCustom = ({ className = "w-5 h-5" }: { className?: string }) => (
+const ChevronUpIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
   </svg>
 )
 
-const ChevronDownIconCustom = ({ className = "w-5 h-5" }: { className?: string }) => (
+const ChevronDownIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
   </svg>
@@ -702,9 +701,9 @@ const ConfigurationCard = () => {
               className="w-full px-4 py-2 bg-white/50 border border-gray-200/50 rounded-3xl shadow-sm hover:border-blue-500/50 transition-all duration-200 text-sm text-gray-600 mb-3 hover:bg-white/70 active:scale-[0.98]"
             >
               {showAvatarModal ? (
-                <ChevronUpIconCustom className="w-4 h-4 inline-block mr-2" />
+                <ChevronUpIcon className="w-4 h-4 inline-block mr-2" />
               ) : (
-                <ChevronDownIconCustom className="w-4 h-4 inline-block mr-2" />
+                <ChevronDownIcon className="w-4 h-4 inline-block mr-2" />
               )}
               {selectedAvatar ? 'Change Avatar' : 'Select Player Avatar'}
             </button>
