@@ -1,4 +1,4 @@
-declare module '@heroicons/react/outline' {
+declare module '@heroicons/react/24/outline' {
   import { FC, SVGProps } from 'react'
 
   export const ChevronUpIcon: FC<SVGProps<SVGSVGElement>>
