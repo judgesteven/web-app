@@ -12,4 +12,9 @@ declare module '@heroicons/react/outline' {
   export const ChevronDoubleUpIcon: FC<IconProps>
   export const ChevronDoubleDownIcon: FC<IconProps>
   // Add any other icons you might need in the future
+}
+
+// Also declare the root module to be safe
+declare module '@heroicons/react' {
+  export * from '@heroicons/react/outline'
 } 
