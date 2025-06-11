@@ -1,10 +1,15 @@
-declare module '@heroicons/react/24/outline' {
+declare module '@heroicons/react/outline' {
   import { FC, SVGProps } from 'react'
 
-  export const ChevronUpIcon: FC<SVGProps<SVGSVGElement>>
-  export const ChevronDownIcon: FC<SVGProps<SVGSVGElement>>
-  export const CheckIcon: FC<SVGProps<SVGSVGElement>>
-  export const ChevronDoubleUpIcon: FC<SVGProps<SVGSVGElement>>
-  export const ChevronDoubleDownIcon: FC<SVGProps<SVGSVGElement>>
+  export interface IconProps extends SVGProps<SVGSVGElement> {
+    title?: string
+    titleId?: string
+  }
+
+  export const ChevronUpIcon: FC<IconProps>
+  export const ChevronDownIcon: FC<IconProps>
+  export const CheckIcon: FC<IconProps>
+  export const ChevronDoubleUpIcon: FC<IconProps>
+  export const ChevronDoubleDownIcon: FC<IconProps>
   // Add any other icons you might need in the future
 } 

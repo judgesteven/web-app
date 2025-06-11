@@ -8,7 +8,7 @@ import AchievementsCard from './AchievementsCard'
 import MysteryCard from './MysteryCard'
 import LeaderboardCard from './LeaderboardCard'
 import { toast } from 'react-hot-toast'
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/outline'
 
 interface Mission {
   id: string
