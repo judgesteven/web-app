@@ -6,6 +6,7 @@ import MissionsSection from './MissionsSection'
 import StreaksCard from './StreaksCard'
 import AchievementsCard from './AchievementsCard'
 import LeaderboardCard from './LeaderboardCard'
+import SurveysCard from './SurveysCard'
 import { toast } from 'react-hot-toast'
 
 // Custom SVG components for chevron icons
@@ -806,25 +807,62 @@ const ConfigurationCard = () => {
         team={playerData.team}
       />
 
+      {/* Player Cards */}
       {selectedPlayer && (
         <>
-          <StreaksCard 
-            key={lastEventTime}
-            playerId={selectedPlayer}
-            accountName={accountName}
-            apiKey={apiKey}
-            onEventCompleted={handleEventCompleted}
-          />
-          <LeaderboardCard
-            accountName={accountName}
-            apiKey={apiKey}
-            onEventCompleted={handleEventCompleted}
-            selectedPlayerId={selectedPlayer}
-          />
-          <AchievementsCard 
-            achievements={achievementsWithStatus} 
-            isLoading={isLoading}
-          />
+          {/* Profile Card */}
+          <div className="mb-6">
+            <ProfileCard
+              name={playerData.name}
+              imgUrl={playerData.imgUrl}
+              points={playerData.points}
+              credits={playerData.credits}
+              level={playerData.level?.name}
+              team={playerData.team}
+            />
+          </div>
+
+          {/* Surveys Card */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Surveys</h3>
+            <SurveysCard
+              accountName={accountName}
+              apiKey={apiKey}
+              playerId={selectedPlayer}
+              onEventCompleted={handleEventCompleted}
+            />
+          </div>
+
+          {/* Streaks Card */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Streaks</h3>
+            <StreaksCard
+              accountName={accountName}
+              apiKey={apiKey}
+              playerId={selectedPlayer}
+              onEventCompleted={handleEventCompleted}
+            />
+          </div>
+
+          {/* Achievements Card */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Achievements</h3>
+            <AchievementsCard
+              achievements={achievementsWithStatus}
+              onEventCompleted={handleEventCompleted}
+            />
+          </div>
+
+          {/* Leaderboard Card */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Leaderboard</h3>
+            <LeaderboardCard
+              accountName={accountName}
+              apiKey={apiKey}
+              onEventCompleted={handleEventCompleted}
+              selectedPlayerId={selectedPlayer}
+            />
+          </div>
         </>
       )}
 

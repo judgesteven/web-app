@@ -16,8 +16,17 @@ interface Achievement {
 }
 
 interface AchievementsCardProps {
-  achievements: Achievement[]
+  achievements: {
+    id: string
+    name: string
+    description: string
+    steps: number
+    stepsCompleted: number
+    status: 'unlocked' | 'granted' | null
+    imgUrl?: string
+  }[]
   isLoading?: boolean
+  onEventCompleted?: () => void
 }
 
 // Helper function to get color based on status
@@ -32,7 +41,7 @@ const getProgressColor = (status: AchievementStatus): string => {
   }
 }
 
-const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoading = false }) => {
+const AchievementsCard: React.FC<AchievementsCardProps> = ({ achievements, isLoading = false, onEventCompleted }) => {
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6 animate-pulse">
