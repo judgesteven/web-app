@@ -13,6 +13,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@nodelib/fs.scandir": "^4.0.1",
+    "@nodelib/fs.walk": "^3.0.1",
+    "fast-glob": "^3.3.3",
     "next": "^13.4.19",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

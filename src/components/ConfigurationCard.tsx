@@ -5,7 +5,6 @@ import ProfileCard from './ProfileCard'
 import MissionsSection from './MissionsSection'
 import StreaksCard from './StreaksCard'
 import AchievementsCard from './AchievementsCard'
-import MysteryCard from './MysteryCard'
 import LeaderboardCard from './LeaderboardCard'
 import { toast } from 'react-hot-toast'
 
@@ -85,6 +84,12 @@ interface Achievement {
   imgUrl?: string
 }
 
+interface Player {
+  id?: string
+  name?: string
+  player?: string
+}
+
 const ConfigurationCard = () => {
   // State declarations
   const [showAvatarModal, setShowAvatarModal] = useState(false)
@@ -92,7 +97,7 @@ const ConfigurationCard = () => {
   const [newPlayerId, setNewPlayerId] = useState('')
   const [newPlayerName, setNewPlayerName] = useState('')
   const [isAddingPlayer, setIsAddingPlayer] = useState(false)
-  const [players, setPlayers] = useState<{id?: string; name?: string; player?: string}[]>([])
+  const [players, setPlayers] = useState<Player[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [accountName, setAccountName] = useState('')
   const [apiKey, setApiKey] = useState('')
@@ -482,11 +487,14 @@ const ConfigurationCard = () => {
 
   const fetchPlayers = async () => {
     if (!accountName || !apiKey) {
-      toast.error('Please enter Account Name and API Key')
+      console.log('Missing credentials:', { accountName: !!accountName, apiKey: !!apiKey })
+      toast.error('Please enter both Account Name and API Key')
       return
     }
 
     setIsLoading(true)
+    console.log('Fetching players with account:', accountName)
+    
     try {
       const url = `https://api.gamelayer.co/api/v0/players?account=${encodeURIComponent(accountName.trim())}`
       const headers = {
@@ -500,17 +508,14 @@ const ConfigurationCard = () => {
       })
 
       const response = await fetch(url, { headers })
-      const text = await response.text()
+      console.log('Players response status:', response.status)
       
-      console.log('Raw API Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        body: text
-      })
-
+      const text = await response.text()
+      console.log('Raw players response:', text)
+      
       // Handle 404 for account not found
       if (response.status === 404) {
+        console.error('Account not found:', accountName)
         toast.error('Account not found. Please check your account name.')
         return
       }
@@ -518,14 +523,15 @@ const ConfigurationCard = () => {
       let data
       try {
         data = JSON.parse(text)
-        console.log('Parsed API Response:', data)
-      } catch {
-        console.error('API Error: Response is not valid JSON', text)
-        toast.error('Failed to fetch players: Invalid response from server')
+        console.log('Parsed players data:', data)
+      } catch (e) {
+        console.error('Failed to parse players JSON:', e)
+        toast.error('Failed to parse players data')
         return
       }
 
       if (!response.ok) {
+        console.error('Failed to fetch players:', data)
         if (data.message) {
           toast.error(data.message)
         } else {
@@ -535,8 +541,10 @@ const ConfigurationCard = () => {
       }
 
       setPlayers(data)
+      console.log('Successfully set players:', data)
+      toast.success('Players fetched successfully')
     } catch (error) {
-      console.error('API Error:', error)
+      console.error('Error fetching players:', error)
       toast.error('Failed to fetch players')
     } finally {
       setIsLoading(false)
@@ -797,16 +805,11 @@ const ConfigurationCard = () => {
             apiKey={apiKey}
             onEventCompleted={handleEventCompleted}
           />
-          <MysteryCard
-            playerId={selectedPlayer}
-            accountName={accountName}
-            apiKey={apiKey}
-            onEventCompleted={handleEventCompleted}
-          />
           <LeaderboardCard
             accountName={accountName}
             apiKey={apiKey}
             onEventCompleted={handleEventCompleted}
+            selectedPlayerId={selectedPlayer}
           />
           <AchievementsCard 
             achievements={achievementsWithStatus} 

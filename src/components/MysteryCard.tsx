@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-hot-toast'
+import Image from 'next/image'
 
 interface Prize {
   id: string
@@ -38,12 +39,14 @@ interface MysteryBox {
     level: any
   }
   tags: string[]
+  prizes: any[]
 }
 
 interface MysteryCardProps {
-  playerId: string
   accountName: string
   apiKey: string
+  playerId: string
+  mysteryBoxId: string
   onEventCompleted?: () => void
 }
 
@@ -51,6 +54,7 @@ const MysteryCard: React.FC<MysteryCardProps> = ({
   playerId,
   accountName,
   apiKey,
+  mysteryBoxId,
   onEventCompleted
 }) => {
   const [isSpinning, setIsSpinning] = useState(false)
@@ -60,8 +64,11 @@ const MysteryCard: React.FC<MysteryCardProps> = ({
   const [wheelRotation, setWheelRotation] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [mysteryBox, setMysteryBox] = useState<MysteryBox | null>(null)
+  const wheelRef = useRef<HTMLDivElement>(null)
+  const [wonPrizes, setWonPrizes] = useState<string[]>([])
+  const isMountedRef = useRef(true)
 
-  // Add debug logging for spin button state
+  // Debug logging
   useEffect(() => {
     console.log('Spin button state:', { 
       isSpinning, 
@@ -72,309 +79,286 @@ const MysteryCard: React.FC<MysteryCardProps> = ({
     })
   }, [isSpinning, mysteryBox, playerId, accountName])
 
-  const fetchMysteryBox = async () => {
-    try {
-      const url = `https://api.gamelayer.co/api/v0/mysteryboxes/1-test-wheel?account=${encodeURIComponent(accountName)}`
-      const headers = {
-        'Accept': 'application/json',
-        'api-key': apiKey
-      }
-
-      console.log('Fetching mystery box:', {
-        url,
-        headers: { ...headers, 'api-key': '***' },
-        accountName,
-        playerId
-      })
-
-      const response = await fetch(url, { headers })
-      const text = await response.text()
-      
-      console.log('Mystery box response:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: text
-      })
-
-      let data
-      try {
-        data = JSON.parse(text)
-      } catch (e) {
-        console.error('Failed to parse mystery box response as JSON:', text)
-        return
-      }
-
-      if (!response.ok) {
-        console.error('Failed to fetch mystery box:', data)
-        return
-      }
-
-      console.log('Setting mystery box data:', {
-        id: data.id,
-        isAvailable: data.isAvailable,
-        credits: data.credits,
-        stock: data.stock
-      })
-
-      setMysteryBox(data)
-    } catch (error) {
-      console.error('Error fetching mystery box:', error)
-    }
-  }
-
+  // Cleanup on unmount
   useEffect(() => {
-    const fetchMysteryBoxAndPrizes = async () => {
-      try {
-        // Fetch mystery box
-        const mysteryBoxUrl = `https://api.gamelayer.co/api/v0/mysteryboxes/1-test-wheel?account=${encodeURIComponent(accountName)}`
-        const headers = {
-          'Accept': 'application/json',
-          'api-key': apiKey
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
+  // Data fetching effect
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!isMountedRef.current) return
+      await fetchMysteryBoxAndPrizes()
+    }
+
+    // Initial fetch
+    fetchData()
+
+    // Set up polling
+    const interval = setInterval(() => {
+      if (!isSpinning && isMountedRef.current) {
+        fetchData()
+      }
+    }, 5000)
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [accountName, apiKey, isSpinning])
+
+  const fetchMysteryBoxAndPrizes = async () => {
+    if (!accountName || !apiKey || !mysteryBoxId) {
+      console.error('Missing required props:', { accountName, apiKey, mysteryBoxId });
+      toast.error('Missing required configuration');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      console.log('Starting to fetch mystery box and prizes...', { 
+        mysteryBoxId, 
+        accountName,
+        currentState: {
+          mysteryBox: mysteryBox ? 'exists' : 'null',
+          prizesCount: prizes.length,
+          isLoading
         }
+      });
 
-        console.log('Fetching mystery box:', {
-          url: mysteryBoxUrl,
-          headers: { ...headers, 'api-key': '***' }
+      const [mysteryBoxResponse, prizesResponse] = await Promise.all([
+        fetch(`https://api.gamelayer.co/api/v0/mysteryboxes/${mysteryBoxId}`, {
+          headers: {
+            'api-key': apiKey,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch(`https://api.gamelayer.co/api/v0/mysteryboxes/${mysteryBoxId}/prizes`, {
+          headers: {
+            'api-key': apiKey,
+            'Content-Type': 'application/json'
+          }
         })
+      ]);
 
-        const mysteryBoxResponse = await fetch(mysteryBoxUrl, { headers })
-        const mysteryBoxText = await mysteryBoxResponse.text()
-        
-        console.log('Mystery box response:', {
+      if (!mysteryBoxResponse.ok) {
+        const errorText = await mysteryBoxResponse.text();
+        console.error('Mystery box API error:', {
           status: mysteryBoxResponse.status,
           statusText: mysteryBoxResponse.statusText,
-          headers: Object.fromEntries(mysteryBoxResponse.headers.entries()),
-          body: mysteryBoxText
-        })
+          body: errorText,
+          url: mysteryBoxResponse.url
+        });
+        throw new Error(`Failed to fetch mystery box: ${mysteryBoxResponse.status} ${mysteryBoxResponse.statusText}`);
+      }
 
-        if (!mysteryBoxResponse.ok) {
-          throw new Error(`Failed to fetch mystery box: ${mysteryBoxResponse.statusText}`)
-        }
-
-        const mysteryBoxData = JSON.parse(mysteryBoxText)
-        console.log('Mystery box data:', mysteryBoxData)
-
-        // Check if mystery box is available
-        if (!mysteryBoxData.isAvailable) {
-          throw new Error('Mystery box is not available')
-        }
-
-        // Fetch prizes
-        const prizesUrl = `https://api.gamelayer.co/api/v0/prizes?account=${encodeURIComponent(accountName)}`
-        console.log('Fetching prizes:', {
-          url: prizesUrl,
-          headers: { ...headers, 'api-key': '***' }
-        })
-
-        const prizesResponse = await fetch(prizesUrl, { headers })
-        const prizesText = await prizesResponse.text()
-        
-        console.log('Prizes response:', {
+      if (!prizesResponse.ok) {
+        const errorText = await prizesResponse.text();
+        console.error('Prizes API error:', {
           status: prizesResponse.status,
           statusText: prizesResponse.statusText,
-          headers: Object.fromEntries(prizesResponse.headers.entries()),
-          body: prizesText
-        })
-
-        if (!prizesResponse.ok) {
-          throw new Error(`Failed to fetch prizes: ${prizesResponse.statusText}`)
-        }
-
-        const prizesData = JSON.parse(prizesText)
-        console.log('Prizes data:', prizesData)
-
-        // Filter prizes with 'MB' tag and map to our Prize interface
-        const mysteryPrizes = prizesData
-          .filter((prize: any) => prize.tags?.includes('MB'))
-          .map((prize: any) => ({
-            id: prize.id,
-            name: prize.name,
-            description: prize.description,
-            stock: prize.stock?.available || 0,
-            probability: prize.probability || 0.25, // Default to equal probability if not specified
-            imgUrl: prize.imgUrl,
-            tags: prize.tags || []
-          }))
-
-        // If no prizes found, throw error
-        if (mysteryPrizes.length === 0) {
-          throw new Error('No mystery prizes available')
-        }
-
-        // Normalize probabilities to sum to 1
-        const totalProbability = mysteryPrizes.reduce((sum: number, prize: Prize) => sum + prize.probability, 0)
-        const normalizedPrizes = mysteryPrizes.map((prize: Prize) => ({
-          ...prize,
-          probability: prize.probability / totalProbability
-        }))
-
-        setMysteryBox(mysteryBoxData)
-        setPrizes(normalizedPrizes)
-        setCredits(mysteryBoxData.credits || 10)
-
-      } catch (error) {
-        console.error('Error fetching data:', error)
-        toast.error('Failed to load mystery wheel')
-      } finally {
-        setIsLoading(false)
+          body: errorText,
+          url: prizesResponse.url
+        });
+        throw new Error(`Failed to fetch prizes: ${prizesResponse.status} ${prizesResponse.statusText}`);
       }
-    }
 
-    fetchMysteryBoxAndPrizes()
-  }, [accountName, apiKey])
+      const [mysteryBoxData, prizesData] = await Promise.all([
+        mysteryBoxResponse.json(),
+        prizesResponse.json()
+      ]);
+
+      console.log('API responses received:', { 
+        mysteryBoxData: {
+          code: mysteryBoxData.code,
+          hasMysteryBox: !!mysteryBoxData.mysterybox,
+          mysteryBoxId: mysteryBoxData.mysterybox?.id,
+          isAvailable: mysteryBoxData.mysterybox?.isAvailable
+        },
+        prizesData: {
+          code: prizesData.code,
+          prizesCount: prizesData.prizes?.length || 0
+        }
+      });
+
+      if (mysteryBoxData.code === 1 && mysteryBoxData.mysterybox) {
+        setMysteryBox(mysteryBoxData.mysterybox);
+        console.log('Mystery box state updated:', {
+          id: mysteryBoxData.mysterybox.id,
+          name: mysteryBoxData.mysterybox.name,
+          isAvailable: mysteryBoxData.mysterybox.isAvailable
+        });
+      } else {
+        console.error('Invalid mystery box response:', mysteryBoxData);
+        toast.error(mysteryBoxData.message || 'Failed to load mystery box');
+      }
+
+      if (prizesData.code === 1 && Array.isArray(prizesData.prizes)) {
+        setPrizes(prizesData.prizes);
+        console.log('Prizes state updated:', {
+          count: prizesData.prizes.length,
+          prizeIds: prizesData.prizes.map((p: Prize) => p.id)
+        });
+      } else {
+        console.error('Invalid prizes response:', prizesData);
+        toast.error(prizesData.message || 'Failed to load prizes');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to load data');
+    } finally {
+      setIsLoading(false);
+      console.log('Fetch completed. Current state:', {
+        isLoading: false,
+        hasMysteryBox: !!mysteryBox,
+        prizesCount: prizes.length
+      });
+    }
+  };
+
+  const calculateTargetRotation = (prize: Prize) => {
+    const prizeIndex = prizes.findIndex(p => p.id === prize.id)
+    return 360 * 5 + (360 / prizes.length) * prizeIndex
+  }
+
+  const animate = async (targetRotation: number) => {
+    if (!wheelRef.current) return;
+    
+    const startRotation = wheelRotation;
+    const startTime = performance.now();
+    const duration = 5000; // 5 seconds
+    const easing = (t: number) => 1 - Math.pow(1 - t, 3); // Cubic ease-out
+
+    return new Promise<void>((resolve) => {
+      const animateFrame = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = easing(progress);
+        
+        const newRotation = startRotation + (targetRotation - startRotation) * easedProgress;
+        setWheelRotation(newRotation);
+
+        if (progress < 1) {
+          requestAnimationFrame(animateFrame);
+        } else {
+          // Animation complete
+          resolve();
+        }
+      };
+
+      requestAnimationFrame(animateFrame);
+    });
+  };
 
   const handleSpin = async () => {
-    if (!mysteryBox?.isAvailable) {
-      toast.error('Mystery wheel is not available')
-      return
-    }
-
-    if (isSpinning) {
-      return
-    }
+    if (!mysteryBox || isSpinning) return;
 
     try {
-      // Call the mystery box claim endpoint
-      const claimUrl = `https://api.gamelayer.co/api/v0/mysteryboxes/1-test-wheel/claim`
-      const headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'api-key': apiKey
-      }
-      const body = {
-        account: accountName,
-        player: playerId
+      setIsSpinning(true);
+
+      // Get a random prize
+      const availablePrizes = prizes.filter(p => !wonPrizes.includes(p.id));
+      if (availablePrizes.length === 0) {
+        toast.error('No more prizes available!');
+        setIsSpinning(false);
+        return;
       }
 
-      console.log('Claiming mystery box:', { url: claimUrl, headers: { ...headers, 'api-key': '***' }, body })
+      const randomIndex = Math.floor(Math.random() * availablePrizes.length);
+      const prize = availablePrizes[randomIndex];
 
-      const claimResponse = await fetch(claimUrl, {
+      // Update state before animation
+      setSelectedPrize(prize);
+      setWonPrizes(prev => [...prev, prize.id]);
+
+      // Start the animation
+      const wheel = document.getElementById('prize-wheel');
+      if (wheel) {
+        const currentRotation = getCurrentRotation(wheel);
+        const targetRotation = currentRotation + 1800 + (randomIndex * (360 / prizes.length));
+        wheel.style.transition = 'transform 5s cubic-bezier(0.17, 0.67, 0.83, 0.67)';
+        wheel.style.transform = `rotate(${targetRotation}deg)`;
+      }
+
+      // Wait for animation to complete
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      // Claim the prize
+      const claimResponse = await fetch(`https://api.gamelayer.co/api/v0/mysteryboxes/${mysteryBox.id}/prizes/${prize.id}/claim`, {
         method: 'POST',
-        headers,
-        body: JSON.stringify(body)
-      })
-
-      const claimText = await claimResponse.text()
-      console.log('Mystery box claim response:', {
-        status: claimResponse.status,
-        statusText: claimResponse.statusText,
-        body: claimText
-      })
-
-      let claimData
-      try {
-        claimData = JSON.parse(claimText)
-      } catch (e) {
-        console.error('Failed to parse claim response as JSON:', claimText)
-        throw new Error('Invalid response from server')
-      }
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'api-key': apiKey
+        },
+        body: JSON.stringify({ playerId })
+      });
 
       if (!claimResponse.ok) {
-        // Handle specific error codes
-        if (claimData.code === 2) {
-          // Don't spin, just show the API's error message
-          toast.error(claimData.message || 'Not enough credits')
-          return
-        }
-        throw new Error(claimData.message || 'Failed to claim mystery box')
+        throw new Error('Failed to claim prize');
       }
 
-      // Only proceed with spinning if we got a successful response (code 1)
-      if (claimData.code === 1) {
-        setIsSpinning(true)
+      const claimData = await claimResponse.json();
+      console.log('Prize claimed:', claimData);
 
-        // Start the wheel animation
-        const spinDuration = 3000 // 3 seconds
-        const startTime = Date.now()
-        const startRotation = wheelRotation
-        const targetRotation = startRotation + 1800 + Math.random() * 360 // 5 full rotations + random
+      // Update credits
+      setCredits(claimData.credits || 0);
+      toast.success(`You won: ${prize.name}`);
 
-        const animate = () => {
-          const elapsed = Date.now() - startTime
-          const progress = Math.min(elapsed / spinDuration, 1)
-          
-          // Easing function for smooth deceleration
-          const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
-          const currentRotation = startRotation + (targetRotation - startRotation) * easeOut(progress)
-          
-          setWheelRotation(currentRotation)
-
-          if (progress < 1) {
-            requestAnimationFrame(animate)
-          } else {
-            // Select prize based on final position
-            const finalAngle = currentRotation % 360
-            const prizeIndex = Math.floor((360 - finalAngle) / (360 / prizes.length))
-            const prize = prizes[prizeIndex]
-            
-            setSelectedPrize(prize)
-            
-            // Update prize stock
-            setPrizes(prev => prev.map(p => 
-              p.id === prize.id ? { ...p, stock: p.stock - 1 } : p
-            ))
-
-            // Show prize notification
-            toast.success(`You won: ${prize.name}`)
-
-            // Call completion callback to refresh player data
-            if (onEventCompleted) {
-              onEventCompleted()
-            }
-
-            // Reset wheel after a short delay
-            setTimeout(() => {
-              setWheelRotation(0)
-              setSelectedPrize(null)
-              setIsSpinning(false)
-            }, 2000) // Wait 2 seconds after winning to reset
-          }
+      // Use Promise.resolve().then() to ensure state updates are complete before fetching new data
+      Promise.resolve().then(() => {
+        fetchMysteryBoxAndPrizes();
+        if (onEventCompleted) {
+          onEventCompleted();
         }
-
-        requestAnimationFrame(animate)
-      } else {
-        // Handle any other response codes
-        toast.error(claimData.message || 'Failed to claim mystery box')
-      }
+      });
 
     } catch (error) {
-      console.error('Error in handleSpin:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to spin the wheel')
-      setIsSpinning(false)
+      console.error('Error during spin:', error);
+      toast.error('Failed to claim prize. Please try again.');
+    } finally {
+      setIsSpinning(false);
     }
-  }
+  };
+
+  const getCurrentRotation = (element: HTMLElement): number => {
+    const transform = window.getComputedStyle(element).transform;
+    const matrix = new DOMMatrix(transform);
+    const angle = Math.round(Math.atan2(matrix.m21, matrix.m11) * (180/Math.PI));
+    return angle < 0 ? angle + 360 : angle;
+  };
+
+  // Add debug logging for render conditions
+  useEffect(() => {
+    console.log('Render conditions:', {
+      isLoading,
+      hasMysteryBox: !!mysteryBox,
+      prizesCount: prizes.length,
+      mysteryBoxId,
+      playerId,
+      accountName
+    });
+  }, [isLoading, mysteryBox, prizes, mysteryBoxId, playerId, accountName]);
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-md mx-auto space-y-4">
-        <h2 className="text-lg font-semibold text-gray-800 px-4">Mystery Wheel</h2>
-        <div className="w-full p-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100/50">
-          <div className="animate-pulse flex flex-col gap-4">
-            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-            <div className="aspect-square bg-gray-200 rounded-full"></div>
-            <div className="h-10 bg-gray-200 rounded w-1/2 mx-auto"></div>
-            <div className="grid grid-cols-2 gap-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-24 bg-gray-200 rounded-xl"></div>
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="bg-white shadow rounded-lg p-6 animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+        <div className="h-64 bg-gray-200 rounded mb-4"></div>
+        <div className="h-10 bg-gray-200 rounded w-1/2"></div>
       </div>
-    )
+    );
   }
 
-  if (!mysteryBox || prizes.length === 0) {
+  if (!mysteryBox || !prizes || prizes.length === 0) {
     return (
-      <div className="w-full max-w-md mx-auto space-y-4">
-        <h2 className="text-lg font-semibold text-gray-800 px-4">{mysteryBox?.name || 'Mystery Wheel'}</h2>
-        <div className="w-full p-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100/50">
-          <div className="text-sm text-gray-500 text-center py-4">
-            {prizes.length === 0 ? 'No mystery prizes available' : 'Mystery wheel is not available'}
-          </div>
+      <div className="bg-white shadow rounded-lg p-6">
+        <div className="text-center text-gray-500">
+          <p>No mystery box or prizes available</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -398,6 +382,7 @@ const MysteryCard: React.FC<MysteryCardProps> = ({
           {/* Prize Wheel */}
           <div className="relative w-full aspect-square max-w-sm mx-auto">
             <div 
+              ref={wheelRef}
               className="absolute inset-0 rounded-full border-8 border-gray-200 bg-gradient-to-br from-purple-100 to-blue-100 transition-transform duration-3000 ease-out"
               style={{ transform: `rotate(${wheelRotation}deg)` }}
             >
@@ -456,20 +441,22 @@ const MysteryCard: React.FC<MysteryCardProps> = ({
             </div>
             
             {/* Pointer */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-b-[24px] border-l-transparent border-r-transparent border-b-red-500" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[24px] border-l-transparent border-r-transparent border-t-red-500" />
           </div>
 
           {/* Spin Button */}
           <div className="flex justify-center">
             <button
               onClick={handleSpin}
-              disabled={isSpinning || !mysteryBox?.isAvailable}
+              disabled={isSpinning || !mysteryBox?.isAvailable || credits < (mysteryBox?.credits || 10)}
               className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                 isSpinning
                   ? 'bg-gray-100 text-gray-500 cursor-wait'
-                  : mysteryBox?.isAvailable
-                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                  : 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                  : !mysteryBox?.isAvailable
+                  ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                  : credits < (mysteryBox?.credits || 10)
+                  ? 'bg-red-100 text-red-500 cursor-not-allowed'
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}
             >
               {isSpinning ? (
@@ -484,49 +471,56 @@ const MysteryCard: React.FC<MysteryCardProps> = ({
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  Spin
+                  {credits < (mysteryBox?.credits || 10) ? 'Need More Credits' : 'Spin'}
                 </span>
               )}
             </button>
           </div>
 
           {/* Prize List */}
-          <div className="space-y-3">
+          <div className="mt-6">
             <h3 className="text-sm font-medium text-gray-900">Available Prizes</h3>
-            <div className="grid gap-3">
-              {prizes.map(prize => (
+            <div className="grid grid-cols-2 gap-2">
+              {prizes.map((prize) => (
                 <div
                   key={prize.id}
-                  className={`bg-white rounded-xl p-4 border ${
-                    prize.stock === 0 ? 'border-red-200 bg-red-50/50' : 'border-gray-100'
+                  className={`relative flex flex-col items-center p-4 rounded-lg ${
+                    wonPrizes.includes(prize.id)
+                      ? 'bg-green-50 border border-green-200'
+                      : 'bg-gray-50 border border-gray-200'
                   }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {prize.imgUrl ? (
-                        <img 
-                          src={prize.imgUrl} 
-                          alt={prize.name}
-                          className="w-full h-full object-contain"
+                  {wonPrizes.includes(prize.id) && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg">
+                      <svg 
+                        className="w-8 h-8 text-green-500" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M5 13l4 4L19 7" 
                         />
-                      ) : (
-                        <span className="text-2xl">🎁</span>
-                      )}
+                      </svg>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <h4 className="text-sm font-medium text-gray-900">{prize.name}</h4>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                          prize.stock === 0
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-green-100 text-green-700'
-                        }`}>
-                          {prize.stock} left
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">{prize.description}</p>
+                  )}
+                  {prize.imgUrl && (
+                    <div className="relative w-16 h-16 mb-2">
+                      <Image
+                        src={prize.imgUrl}
+                        alt={prize.name}
+                        fill
+                        className="object-contain"
+                      />
                     </div>
-                  </div>
+                  )}
+                  <h3 className="text-sm font-medium text-gray-900 text-center">{prize.name}</h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {prize.stock > 0 ? `${prize.stock} remaining` : 'Out of stock'}
+                  </p>
                 </div>
               ))}
             </div>
