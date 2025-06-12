@@ -9,17 +9,21 @@ import MysteryCard from './MysteryCard'
 import LeaderboardCard from './LeaderboardCard'
 import { toast } from 'react-hot-toast'
 
-// Custom SVG Icons
+// Custom SVG components for chevron icons
 const ChevronUpIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"
-    strokeWidth={1.5}
     stroke="currentColor"
     {...props}
   >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M5 15l7-7 7 7"
+    />
   </svg>
 )
 
@@ -28,11 +32,15 @@ const ChevronDownIcon = (props: React.SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"
-    strokeWidth={1.5}
     stroke="currentColor"
     {...props}
   >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M19 9l-7 7-7-7"
+    />
   </svg>
 )
 
