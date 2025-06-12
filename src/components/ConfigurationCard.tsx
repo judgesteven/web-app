@@ -117,6 +117,31 @@ const ConfigurationCard = () => {
   const [lastEventTime, setLastEventTime] = useState(0)
 
   // Define all callback functions first
+  const fetchTeamDetails = useCallback(async (teamId: string) => {
+    const url = `https://api.gamelayer.co/api/v0/teams/${teamId}?account=${encodeURIComponent(accountName)}`;
+    const headers = {
+      'Accept': 'application/json',
+      'api-key': apiKey,
+    };
+    console.log('Team API Request:', { method: 'GET', url, headers });
+    try {
+      const response = await fetch(url, { headers });
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.error('Team API Error: Response is not valid JSON', text);
+        return null;
+      }
+      console.log('Team API Full Response:', data);
+      return data.team.name;
+    } catch (error) {
+      console.error('Team API Error:', error);
+      return null;
+    }
+  }, [accountName, apiKey]);
+
   const fetchAchievementProgress = useCallback(async (playerId: string, currentAccountName: string, currentApiKey: string) => {
     const playerAchievementsUrl = `https://api.gamelayer.co/api/v0/players/${playerId}/achievements?account=${encodeURIComponent(currentAccountName)}`
     const headers = {
@@ -180,13 +205,23 @@ const ConfigurationCard = () => {
       const playerData = await playerResponse.json()
       console.log('Player data:', playerData)
 
-      // Update player state
-      setPlayerData(playerData)
+      // If player has a team ID, fetch team details
+      let teamName = null
+      if (playerData.team) {  // Changed from teamId to team since that's what we get from the API
+        console.log('Fetching team details for team ID:', playerData.team)
+        teamName = await fetchTeamDetails(playerData.team)
+      }
+
+      // Update player state with team name
+      setPlayerData({
+        ...playerData,
+        team: teamName || playerData.team  // Use fetched team name if available, otherwise use original team value
+      })
     } catch (error) {
       console.error('Error fetching player details:', error)
       toast.error('Failed to fetch player details')
     }
-  }, [selectedPlayer, accountName, apiKey])
+  }, [selectedPlayer, accountName, apiKey, fetchTeamDetails])
 
   const handleFetchAchievements = useCallback(async () => {
     if (!selectedPlayer || !accountName || !apiKey) return
@@ -548,31 +583,6 @@ const ConfigurationCard = () => {
       toast.error('Failed to fetch players')
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const fetchTeamDetails = async (teamId: string) => {
-    const url = `https://api.gamelayer.co/api/v0/teams/${teamId}?account=${encodeURIComponent(accountName)}`;
-    const headers = {
-      'Accept': 'application/json',
-      'api-key': apiKey,
-    };
-    console.log('Team API Request:', { method: 'GET', url, headers });
-    try {
-      const response = await fetch(url, { headers });
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        console.error('Team API Error: Response is not valid JSON', text);
-        return null;
-      }
-      console.log('Team API Full Response:', data);
-      return data.team.name;
-    } catch (error) {
-      console.error('Team API Error:', error);
-      return null;
     }
   }
 
