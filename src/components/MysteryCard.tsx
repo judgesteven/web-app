@@ -461,7 +461,6 @@ const MysteryCard: React.FC<MysteryCardProps> = ({
 
           {/* Spin Button */}
           <div className="flex justify-center">
-            {console.log('Spin button state:', { isSpinning, isAvailable: mysteryBox?.isAvailable })}
             <button
               onClick={handleSpin}
               disabled={isSpinning || !mysteryBox?.isAvailable}
