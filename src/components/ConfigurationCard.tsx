@@ -829,6 +829,7 @@ const ConfigurationCard = () => {
           <SpinWinCard
             accountName={accountName}
             apiKey={apiKey}
+            selectedPlayer={selectedPlayer}
             onEventCompleted={handleEventCompleted}
           />
           <LeaderboardCard

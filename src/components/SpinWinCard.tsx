@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GiftIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
 
 interface MysteryBoxCardProps {
   accountName: string;
   apiKey: string;
+  selectedPlayer: string;
   onEventCompleted?: () => void;
 }
 
@@ -26,6 +28,7 @@ interface MysteryBoxData {
 const MysteryBoxCard: React.FC<MysteryBoxCardProps> = ({ 
   accountName, 
   apiKey,
+  selectedPlayer,
   onEventCompleted 
 }) => {
   const [mysteryBoxData, setMysteryBoxData] = useState<MysteryBoxData | null>(null);
@@ -74,39 +77,58 @@ const MysteryBoxCard: React.FC<MysteryBoxCardProps> = ({
   const handleOpen = async () => {
     if (!mysteryBoxData || isOpening) return;
     
+    // If there's a prize showing, close it
+    if (selectedPrize) {
+      setSelectedPrize(null);
+      return;
+    }
+    
     setIsOpening(true);
-    setSelectedPrize(null);
     
     try {
-      const response = await fetch(`https://api.gamelayer.co/api/v0/mysteryboxes/${mysteryBoxData.id}/open`, {
+      const response = await fetch(`https://api.gamelayer.co/api/v0/mysteryboxes/1-test-wheel/claim`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
           'api-key': apiKey,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ accountName }),
+        body: JSON.stringify({ 
+          account: accountName,
+          player: selectedPlayer 
+        }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to open mystery box');
-      }
 
       const result = await response.json();
-      setSelectedPrize({
-        id: result.prizeId,
-        name: result.name,
-        imgUrl: result.imgUrl
-      });
-      
-      // Refresh mystery box data after successful open
-      await fetchMysteryBoxData();
-      
-      if (onEventCompleted) {
-        onEventCompleted();
+      console.log('Claim response:', result);
+
+      if (!response.ok || result.code === 2) {
+        // Use the message from the API response
+        throw new Error(result.message || 'Failed to claim mystery box');
+      }
+
+      // Check if we got a valid prize in the response
+      if (result.prize && result.prize.id && result.prize.name) {
+        console.log('Setting prize:', result.prize);
+        setSelectedPrize({
+          id: result.prize.id,
+          name: result.prize.name,
+          imgUrl: result.prize.imgUrl
+        });
+        
+        // Refresh mystery box data after successful claim
+        await fetchMysteryBoxData();
+        
+        if (onEventCompleted) {
+          onEventCompleted();
+        }
+      } else {
+        console.error('Invalid prize data in response:', result);
+        throw new Error('Invalid prize data received from server');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to open mystery box');
+      console.error('Error claiming mystery box:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to claim mystery box');
     } finally {
       setIsOpening(false);
     }
@@ -119,6 +141,7 @@ const MysteryBoxCard: React.FC<MysteryBoxCardProps> = ({
   if (isLoading) {
     return (
       <div className="w-full max-w-lg mx-auto space-y-4">
+        <h2 className="text-lg font-semibold text-gray-800 px-4">Mystery Wins</h2>
         <div className="p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
           <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
@@ -128,27 +151,11 @@ const MysteryBoxCard: React.FC<MysteryBoxCardProps> = ({
     );
   }
 
-  if (error) {
-    return (
-      <div className="w-full max-w-lg mx-auto space-y-4">
-        <div className="p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
-          <div className="text-red-500 text-sm">{error}</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full max-w-lg mx-auto space-y-4">
       <h2 className="text-lg font-semibold text-gray-800 px-4">Mystery Wins</h2>
       <div className="w-full p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          </div>
-        ) : error ? (
-          <div className="text-center text-red-600 py-4">{error}</div>
-        ) : mysteryBoxData ? (
+        {mysteryBoxData ? (
           <div className="space-y-6">
             {/* Credits in upper right */}
             <div className="flex justify-end">
@@ -189,18 +196,20 @@ const MysteryBoxCard: React.FC<MysteryBoxCardProps> = ({
               </div>
             )}
 
-            {/* Centered Open Button */}
+            {/* Centered Open/Close Button */}
             <div className="flex justify-center">
               <button
                 onClick={handleOpen}
-                disabled={isOpening || !mysteryBoxData.isAvailable}
+                disabled={isOpening}
                 className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  isOpening || !mysteryBoxData.isAvailable
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  isOpening
+                    ? 'bg-gray-100 text-gray-400 cursor-wait'
+                    : selectedPrize
+                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                 }`}
               >
-                {isOpening ? 'Opening...' : 'Open!'}
+                {isOpening ? 'Opening...' : selectedPrize ? 'Close' : 'Open!'}
               </button>
             </div>
           </div>
