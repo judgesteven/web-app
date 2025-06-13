@@ -111,7 +111,7 @@ const PrizesCard: React.FC<PrizesCardProps> = ({
   }
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4">
+    <div className="w-full max-w-lg mx-auto space-y-4">
       <div className="flex justify-between items-center px-4">
         <h2 className="text-lg font-semibold text-gray-800">Available Prizes</h2>
         {lastUpdated && (

@@ -362,7 +362,7 @@ const MysteryCard: React.FC<MysteryCardProps> = ({
   }
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4">
+    <div className="w-full max-w-lg mx-auto space-y-4">
       <h2 className="text-lg font-semibold text-gray-800 px-4">{mysteryBox?.name}</h2>
       <div className="w-full p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
         <div className="space-y-6">

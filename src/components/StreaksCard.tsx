@@ -195,7 +195,7 @@ const StreaksCard: React.FC<StreaksCardProps> = ({
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-md mx-auto space-y-4">
+      <div className="w-full max-w-lg mx-auto space-y-4">
         <h2 className="text-lg font-semibold text-gray-800 px-4">Current Streaks</h2>
         <div className="w-full p-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100/50">
           <div className="animate-pulse flex flex-col gap-4">
@@ -209,7 +209,7 @@ const StreaksCard: React.FC<StreaksCardProps> = ({
 
   if (streaks.length === 0) {
     return (
-      <div className="w-full max-w-md mx-auto space-y-4">
+      <div className="w-full max-w-lg mx-auto space-y-4">
         <h2 className="text-lg font-semibold text-gray-800 px-4">Current Streaks</h2>
         <div className="w-full p-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100/50">
           <div className="text-sm text-gray-500 text-center py-4">
@@ -221,7 +221,7 @@ const StreaksCard: React.FC<StreaksCardProps> = ({
   }
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4">
+    <div className="w-full max-w-lg mx-auto space-y-4">
       <h2 className="text-lg font-semibold text-gray-800 px-4">Current Streaks</h2>
       <div className="w-full p-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100/50">
         <div className="space-y-4">

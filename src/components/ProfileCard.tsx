@@ -11,7 +11,7 @@ interface ProfileCardProps {
 
 const ProfileCard = ({ name, imgUrl, points, credits, level, team }: ProfileCardProps) => {
   return (
-    <div className="w-full max-w-md mx-auto p-0 sm:p-0 bg-gradient-to-br from-purple-500 via-teal-400 to-blue-400 rounded-3xl shadow-2xl border-0 relative overflow-hidden flex items-stretch min-h-[200px]">
+    <div className="w-full max-w-lg mx-auto p-0 sm:p-0 bg-gradient-to-br from-purple-500 via-teal-400 to-blue-400 rounded-3xl shadow-2xl border-0 relative overflow-hidden flex items-stretch min-h-[200px]">
       {/* Left: Avatar & Name */}
       <div className="flex flex-col items-center justify-center bg-white/90 rounded-l-3xl px-4 py-6 w-2/5 min-w-[120px]">
         <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-purple-400 via-teal-300 to-blue-200 flex items-center justify-center shadow-lg border-4 border-white mb-2">

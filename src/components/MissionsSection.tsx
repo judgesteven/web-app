@@ -251,7 +251,7 @@ const MissionsSection: React.FC<MissionsSectionProps> = ({
   }
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4">
+    <div className="w-full max-w-lg mx-auto space-y-4">
       <h2 className="text-lg font-semibold text-gray-800 px-4">Available Missions</h2>
       <div className="space-y-4">
         {visibleMissions.map((mission) => {

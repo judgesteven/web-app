@@ -655,7 +655,7 @@ const ConfigurationCard = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
-      <div className="w-full max-w-md mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 relative">
+      <div className="w-full max-w-lg mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 relative">
         <div className="space-y-4">
           {/* Account Name */}
           <div className="flex gap-2">

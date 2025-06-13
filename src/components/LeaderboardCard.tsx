@@ -230,7 +230,7 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-md mx-auto space-y-4">
+      <div className="w-full max-w-lg mx-auto space-y-4">
         <h2 className="text-lg font-semibold text-gray-800 px-4">Leaderboard</h2>
         <div className="w-full p-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100/50">
           <div className="animate-pulse space-y-3">
@@ -252,7 +252,7 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
 
   if (entries.length === 0) {
     return (
-      <div className="w-full max-w-md mx-auto space-y-4">
+      <div className="w-full max-w-lg mx-auto space-y-4">
         <h2 className="text-lg font-semibold text-gray-800 px-4">Leaderboard</h2>
         <div className="w-full p-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100/50">
           <div className="text-sm text-gray-500 text-center py-4">
@@ -264,7 +264,7 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
   }
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4">
+    <div className="w-full max-w-lg mx-auto space-y-4">
       <h2 className="text-lg font-semibold text-gray-800 px-4">Leaderboard</h2>
       <div className="w-full p-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-gray-100/50">
         <div className="space-y-3">

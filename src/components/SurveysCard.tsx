@@ -168,7 +168,7 @@ const SurveysCard: React.FC<SurveysCardProps> = ({
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-md mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
+      <div className="w-full max-w-lg mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
         <div className="animate-pulse space-y-4">
           <div className="h-6 bg-gray-200 rounded w-3/4"></div>
           <div className="h-4 bg-gray-200 rounded w-full"></div>
@@ -186,7 +186,7 @@ const SurveysCard: React.FC<SurveysCardProps> = ({
 
   if (error) {
     return (
-      <div className="w-full max-w-md mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
+      <div className="w-full max-w-lg mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
         <p className="text-red-500 text-center">{error}</p>
       </div>
     )
@@ -194,14 +194,14 @@ const SurveysCard: React.FC<SurveysCardProps> = ({
 
   if (!survey) {
     return (
-      <div className="w-full max-w-md mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
+      <div className="w-full max-w-lg mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
         <p className="text-gray-500 text-center">No survey available</p>
       </div>
     )
   }
 
   return (
-    <div className="w-full max-w-md mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
+    <div className="w-full max-w-lg mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
       <h2 className="text-xl font-bold text-gray-800 mb-2">{survey.name}</h2>
       <p className="text-gray-600 mb-4">{survey.description}</p>
       
