@@ -6,7 +6,7 @@ import MissionsSection from './MissionsSection'
 import StreaksCard from './StreaksCard'
 import AchievementsCard from './AchievementsCard'
 import LeaderboardCard from './LeaderboardCard'
-import SurveysCard from './SurveysCard'
+import PrizesCard from './PrizesCard'
 import { toast } from 'react-hot-toast'
 
 // Custom SVG components for chevron icons
@@ -798,82 +798,47 @@ const ConfigurationCard = () => {
           </div>
         )}
       </div>
-      <ProfileCard
-        name={playerData.name}
-        imgUrl={playerData.imgUrl}
-        points={playerData.points}
-        credits={playerData.credits}
-        level={playerData.level?.name}
-        team={playerData.team}
-      />
 
-      {/* Player Cards */}
-      {selectedPlayer && (
+      {selectedPlayer && playerData.name && (
         <>
-          {/* Profile Card */}
-          <div className="mb-6">
-            <ProfileCard
-              name={playerData.name}
-              imgUrl={playerData.imgUrl}
-              points={playerData.points}
-              credits={playerData.credits}
-              level={playerData.level?.name}
-              team={playerData.team}
-            />
-          </div>
-
-          {/* Surveys Card */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Surveys</h3>
-            <SurveysCard
-              accountName={accountName}
-              apiKey={apiKey}
-              playerId={selectedPlayer}
-              onEventCompleted={handleEventCompleted}
-            />
-          </div>
-
-          {/* Streaks Card */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Streaks</h3>
-            <StreaksCard
-              accountName={accountName}
-              apiKey={apiKey}
-              playerId={selectedPlayer}
-              onEventCompleted={handleEventCompleted}
-            />
-          </div>
-
-          {/* Achievements Card */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Achievements</h3>
-            <AchievementsCard
-              achievements={achievementsWithStatus}
-              onEventCompleted={handleEventCompleted}
-            />
-          </div>
-
-          {/* Leaderboard Card */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Leaderboard</h3>
-            <LeaderboardCard
-              accountName={accountName}
-              apiKey={apiKey}
-              onEventCompleted={handleEventCompleted}
-              selectedPlayerId={selectedPlayer}
-            />
-          </div>
+          <ProfileCard
+            name={playerData.name}
+            imgUrl={playerData.imgUrl}
+            points={playerData.points}
+            credits={playerData.credits}
+            level={playerData.level?.name}
+            team={playerData.team}
+          />
+          <StreaksCard 
+            key={lastEventTime}
+            playerId={selectedPlayer}
+            accountName={accountName}
+            apiKey={apiKey}
+            onEventCompleted={handleEventCompleted}
+          />
+          <AchievementsCard 
+            achievements={achievementsWithStatus} 
+            isLoading={isLoading}
+          />
+          <PrizesCard
+            accountName={accountName}
+            apiKey={apiKey}
+            onEventCompleted={handleEventCompleted}
+          />
+          <LeaderboardCard
+            accountName={accountName}
+            apiKey={apiKey}
+            onEventCompleted={handleEventCompleted}
+            selectedPlayerId={selectedPlayer}
+          />
+          <MissionsSection
+            missions={missions}
+            playerId={selectedPlayer}
+            accountName={accountName}
+            apiKey={apiKey}
+            onEventCompleted={handleEventCompleted}
+          />
         </>
-      )}
-
-      {selectedPlayer && missions.length > 0 && (
-        <MissionsSection 
-          missions={missions} 
-          playerId={selectedPlayer}
-          accountName={accountName}
-          apiKey={apiKey}
-          onEventCompleted={handleEventCompleted}
-        />
       )}
     </div>
   )

@@ -39,14 +39,16 @@ const SurveysCard: React.FC<SurveysCardProps> = ({
   const [isLoading, setIsLoading] = useState(true)
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchSurvey = useCallback(async () => {
     if (!accountName || !apiKey) {
       console.log('Missing required fields for fetchSurvey')
+      setError('Missing required configuration')
+      setIsLoading(false)
       return
     }
 
-    setIsLoading(true)
     try {
       const surveyId = '1-test-survey'
       const url = `https://api.gamelayer.co/api/v0/surveys/${surveyId}?account=${encodeURIComponent(accountName)}`
@@ -65,9 +67,15 @@ const SurveysCard: React.FC<SurveysCardProps> = ({
       const data = await response.json()
       console.log('Survey data:', data)
       
-      setSurvey(data)
+      if (data && data.survey) {
+        setSurvey(data.survey)
+        setError(null)
+      } else {
+        setError('No survey data available')
+      }
     } catch (error) {
       console.error('Error fetching survey:', error)
+      setError(error instanceof Error ? error.message : 'Failed to load survey')
       toast.error('Failed to load survey')
     } finally {
       setIsLoading(false)
@@ -76,6 +84,8 @@ const SurveysCard: React.FC<SurveysCardProps> = ({
 
   useEffect(() => {
     if (accountName && apiKey) {
+      setIsLoading(true)
+      setError(null)
       fetchSurvey()
     }
   }, [accountName, apiKey, fetchSurvey])
@@ -170,6 +180,14 @@ const SurveysCard: React.FC<SurveysCardProps> = ({
           </div>
           <div className="h-10 bg-gray-200 rounded w-full"></div>
         </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="w-full max-w-md mx-auto p-4 sm:p-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
+        <p className="text-red-500 text-center">{error}</p>
       </div>
     )
   }
