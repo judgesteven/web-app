@@ -7,6 +7,7 @@ import StreaksCard from './StreaksCard'
 import AchievementsCard from './AchievementsCard'
 import LeaderboardCard from './LeaderboardCard'
 import PrizesCard from './PrizesCard'
+import SpinWinCard from './SpinWinCard'
 import { toast } from 'react-hot-toast'
 
 // Custom SVG components for chevron icons
@@ -821,6 +822,11 @@ const ConfigurationCard = () => {
             isLoading={isLoading}
           />
           <PrizesCard
+            accountName={accountName}
+            apiKey={apiKey}
+            onEventCompleted={handleEventCompleted}
+          />
+          <SpinWinCard
             accountName={accountName}
             apiKey={apiKey}
             onEventCompleted={handleEventCompleted}
