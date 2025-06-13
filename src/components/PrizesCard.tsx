@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid'
 
@@ -21,68 +21,90 @@ interface PrizesCardProps {
   accountName: string
   apiKey: string
   onEventCompleted?: () => void
+  pollInterval?: number // Optional prop to customize polling interval in milliseconds
 }
 
-const PrizesCard: React.FC<PrizesCardProps> = ({ accountName, apiKey, onEventCompleted }) => {
+const PrizesCard: React.FC<PrizesCardProps> = ({ 
+  accountName, 
+  apiKey, 
+  onEventCompleted,
+  pollInterval = 10000 // Default to 10 seconds
+}) => {
   const [prizes, setPrizes] = useState<Prize[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  useEffect(() => {
-    const fetchPrizes = async () => {
-      try {
-        setIsLoading(true)
-        const url = `https://api.gamelayer.co/api/v0/prizes?account=${encodeURIComponent(accountName)}`
-        const headers = {
-          'Accept': 'application/json',
-          'api-key': apiKey
-        }
-
-        console.log('Fetching prizes:', {
-          url,
-          headers: { ...headers, 'api-key': '***' }
-        })
-
-        const response = await fetch(url, { headers })
-        const responseText = await response.text()
-        
-        console.log('Prizes response:', {
-          status: response.status,
-          statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries()),
-          body: responseText
-        })
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch prizes: ${response.statusText}`)
-        }
-
-        let data
-        try {
-          data = JSON.parse(responseText)
-        } catch (e) {
-          console.error('Failed to parse prizes response as JSON:', responseText)
-          throw new Error('Failed to parse prizes data')
-        }
-
-        // Filter prizes to only show those with 'MB' tag
-        const filteredPrizes = (data || []).filter((prize: Prize) => 
-          prize.tags && prize.tags.includes('MB')
-        )
-        setPrizes(filteredPrizes)
-        setError(null)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load prizes')
-        console.error('Error fetching prizes:', err)
-      } finally {
-        setIsLoading(false)
+  const fetchPrizes = useCallback(async () => {
+    try {
+      const url = `https://api.gamelayer.co/api/v0/prizes?account=${encodeURIComponent(accountName)}`
+      const headers = {
+        'Accept': 'application/json',
+        'api-key': apiKey
       }
-    }
 
+      console.log('Fetching prizes:', {
+        url,
+        headers: { ...headers, 'api-key': '***' },
+        timestamp: new Date().toISOString()
+      })
+
+      const response = await fetch(url, { headers })
+      const responseText = await response.text()
+      
+      console.log('Prizes response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: responseText,
+        timestamp: new Date().toISOString()
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch prizes: ${response.statusText}`)
+      }
+
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (e) {
+        console.error('Failed to parse prizes response as JSON:', responseText)
+        throw new Error('Failed to parse prizes data')
+      }
+
+      // Filter prizes to only show those with 'MB' tag
+      const filteredPrizes = (data || []).filter((prize: Prize) => 
+        prize.tags && prize.tags.includes('MB')
+      )
+      setPrizes(filteredPrizes)
+      setError(null)
+      setLastUpdated(new Date())
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load prizes')
+      console.error('Error fetching prizes:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [accountName, apiKey])
+
+  // Initial fetch
+  useEffect(() => {
     if (accountName && apiKey) {
       fetchPrizes()
     }
-  }, [accountName, apiKey])
+  }, [accountName, apiKey, fetchPrizes])
+
+  // Set up polling
+  useEffect(() => {
+    if (!accountName || !apiKey) return
+
+    const intervalId = setInterval(() => {
+      fetchPrizes()
+    }, pollInterval)
+
+    // Cleanup interval on unmount or when dependencies change
+    return () => clearInterval(intervalId)
+  }, [accountName, apiKey, fetchPrizes, pollInterval])
 
   if (prizes.length === 0 && !isLoading && !error) {
     return null
@@ -90,7 +112,14 @@ const PrizesCard: React.FC<PrizesCardProps> = ({ accountName, apiKey, onEventCom
 
   return (
     <div className="w-full max-w-md mx-auto space-y-4">
-      <h2 className="text-lg font-semibold text-gray-800 px-4">Available Prizes</h2>
+      <div className="flex justify-between items-center px-4">
+        <h2 className="text-lg font-semibold text-gray-800">Available Prizes</h2>
+        {lastUpdated && (
+          <span className="text-xs text-gray-500">
+            Updated {lastUpdated.toLocaleTimeString()}
+          </span>
+        )}
+      </div>
       <div className="p-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20">
         {isLoading ? (
           <div className="animate-pulse space-y-3">
